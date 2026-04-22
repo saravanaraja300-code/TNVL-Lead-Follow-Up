@@ -1,0 +1,19 @@
+{
+  "name": "lead-tracker-dashboard",
+  "version": "1.0.0",
+  "description": "Lead Tracker Dashboard with Google Sheets integration",
+  "main": "lead_tracker_server.js",
+  "scripts": {
+    "start": "node lead_tracker_server.js",
+    "dev": "node lead_tracker_server.js"
+  },
+  "dependencies": {
+    "node-fetch": "^2.6.7"
+  },
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  "keywords": ["dashboard", "lead-tracker", "google-sheets"],
+  "author": "",
+  "license": "ISC"
+}
