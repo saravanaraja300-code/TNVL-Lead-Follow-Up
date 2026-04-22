@@ -207,7 +207,7 @@ thead th.date-col {
   color: #4d9de0;
   border-bottom-color: #1e4d7a;
   text-align: center;
-  min-width: 120px;
+  min-width: 160px;
 }
 thead th.date-col.today {
   background: #0d2a1a;
@@ -289,109 +289,79 @@ tbody tr:hover td:nth-child(2) { background: #121920; }
 
 /* Day cell */
 .day-cell {
-  text-align: center;
-  min-width: 120px;
+  text-align: left;
+  min-width: 160px;
   padding: 6px 8px !important;
-}
-.day-cell-inner {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 3px;
-}
-.day-pill {
-  display: inline-block;
-  background: var(--day-bg);
-  color: var(--day-text);
-  border: 1px solid var(--day-border);
-  border-radius: 4px;
-  padding: 2px 8px;
-  font-size: 10px;
-  font-family: 'Space Mono', monospace;
-  font-weight: 700;
-}
-.day-pill.b1-day { background: rgba(255,77,77,0.1); color: var(--b1); border-color: rgba(255,77,77,0.3); }
-.day-pill.b2-day { background: rgba(245,166,35,0.1); color: var(--b2); border-color: rgba(245,166,35,0.3); }
-.day-pill.b3-day { background: rgba(249,215,28,0.1); color: var(--b3); border-color: rgba(249,215,28,0.3); }
-.day-pill.b4-day { background: rgba(88,166,255,0.1); color: var(--b4); border-color: rgba(88,166,255,0.3); }
-.day-pill.move-day {
-  background: rgba(63,185,80,0.15);
-  color: #3fb950;
-  border-color: rgba(63,185,80,0.4);
-  box-shadow: 0 0 6px rgba(63,185,80,0.2);
+  vertical-align: top !important;
+  white-space: normal !important;
 }
 .today-col { background: rgba(63,185,80,0.03); }
 
-/* Action label inside day cell */
-.action-label {
-  font-size: 9px;
-  font-family: 'DM Sans', sans-serif;
-  color: var(--text-muted);
-  max-width: 110px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  cursor: pointer;
-  line-height: 1.3;
-  padding: 1px 4px;
-  border-radius: 3px;
-  background: rgba(255,255,255,0.04);
-  position: relative;
+/* Move day indicator */
+.move-day-dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #3fb950;
+  box-shadow: 0 0 5px rgba(63,185,80,0.6);
+  margin-right: 5px;
+  vertical-align: middle;
+  flex-shrink: 0;
 }
-.action-label:hover { color: var(--text); background: rgba(255,255,255,0.08); }
-.action-label.has-call  { color: #79c0ff; }
-.action-label.has-sms   { color: #e3b341; }
-.action-label.has-email { color: #56d364; }
-.action-label.has-multi { color: #c678dd; }
 
-/* Popup tooltip */
-#fu-popup {
-  display: none;
-  position: fixed;
-  z-index: 9999;
-  background: #1e2430;
-  border: 1px solid #58a6ff;
-  border-radius: 8px;
-  padding: 12px 16px;
-  max-width: 380px;
-  min-width: 260px;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.6);
-  pointer-events: none;
+/* Inline action block — replaces the pill + popup */
+.inline-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  width: 100%;
 }
-#fu-popup .popup-day {
-  font-family: 'Space Mono', monospace;
-  font-size: 11px;
-  font-weight: 700;
-  color: #58a6ff;
-  margin-bottom: 8px;
-  border-bottom: 1px solid #30363d;
-  padding-bottom: 6px;
-}
-#fu-popup .popup-step {
+
+.action-line {
   display: flex;
   align-items: flex-start;
-  gap: 8px;
-  margin-bottom: 6px;
-  font-size: 12px;
-  color: #e6edf3;
-  line-height: 1.5;
+  gap: 5px;
+  font-size: 10.5px;
+  line-height: 1.4;
+  color: var(--text);
+  padding: 2px 0;
 }
-#fu-popup .popup-step:last-child { margin-bottom: 0; }
-#fu-popup .step-num {
-  background: #30363d;
-  color: #8b949e;
-  border-radius: 50%;
-  width: 18px;
-  height: 18px;
-  min-width: 18px;
-  display: flex;
+
+.action-num {
+  display: inline-flex;
   align-items: center;
   justify-content: center;
+  min-width: 16px;
+  height: 16px;
+  border-radius: 50%;
   font-size: 9px;
   font-family: 'Space Mono', monospace;
   font-weight: 700;
-  margin-top: 2px;
+  flex-shrink: 0;
+  margin-top: 1px;
 }
+
+/* Color variants by action type */
+.action-line.type-call  { color: #79c0ff; }
+.action-line.type-sms   { color: #e3b341; }
+.action-line.type-email { color: #56d364; }
+.action-line.type-multi { color: #c9d1d9; }
+
+.action-num.type-call  { background: rgba(97,175,254,0.2);  color: #79c0ff; }
+.action-num.type-sms   { background: rgba(227,179,65,0.2);  color: #e3b341; }
+.action-num.type-email { background: rgba(86,211,100,0.2);  color: #56d364; }
+.action-num.type-multi { background: rgba(198,120,221,0.2); color: #c678dd; }
+
+/* Thin top border for each cell that has content */
+.day-cell.has-content {
+  border-top: 2px solid transparent;
+}
+.day-cell.has-content.bc-b1 { border-top-color: rgba(255,77,77,0.4); background: rgba(255,77,77,0.03); }
+.day-cell.has-content.bc-b2 { border-top-color: rgba(245,166,35,0.4); background: rgba(245,166,35,0.03); }
+.day-cell.has-content.bc-b3 { border-top-color: rgba(249,215,28,0.4); background: rgba(249,215,28,0.03); }
+.day-cell.has-content.bc-b4 { border-top-color: rgba(88,166,255,0.4); background: rgba(88,166,255,0.03); }
+.day-cell.has-content.bc-move { border-top-color: #3fb950; background: rgba(63,185,80,0.05); }
 
 .empty-state {
   text-align: center;
@@ -419,12 +389,6 @@ tbody tr:hover td:nth-child(2) { background: #121920; }
 </style>
 </head>
 <body>
-
-<!-- Popup tooltip -->
-<div id="fu-popup">
-  <div class="popup-day" id="popup-day-label"></div>
-  <div id="popup-steps"></div>
-</div>
 
 <div class="header">
   <div>
@@ -490,108 +454,101 @@ tbody tr:hover td:nth-child(2) { background: #121920; }
 
 <script>
 // ─────────────────────────────────────────────
-// POPUP DATA STORE  ← KEY FIX
-// Instead of embedding multi-line text in HTML attributes (which collapses
-// newlines), we store popup content in a JS Map keyed by a numeric ID.
-// The action-label element carries only data-pid="<id>" so the handler
-// can look up the full, properly-newlined text from this map.
-// ─────────────────────────────────────────────
-const POPUP_STORE = new Map();
-let _popupIdCounter = 0;
-
-function registerPopup(dayLabel, fullText) {
-  const id = _popupIdCounter++;
-  POPUP_STORE.set(id, { dayLabel, fullText });
-  return id;
-}
-
-// ─────────────────────────────────────────────
 // FOLLOW-UP STRATEGY DATA
 // ─────────────────────────────────────────────
 const CLOSE_RANGE_ACTIONS = {
-  14: { short:'📞 SMS-T25 Email-V21', full:'1st call within first half of shift\nSMS Template 25 to be sent immediately after 1st call\nValue Email Template 21', type:'multi' },
-  13: { short:'📞 SMS-T26 Email-V22', full:'1st call within first half of shift\nSMS Template 26 to be sent immediately after 1st call\nValue Email Template 22', type:'multi' },
-  12: { short:'📞 SMS-T26 Email-V23', full:'1st call within first half of shift\nSMS Template 26 to be sent immediately after 1st call\nValue Email Template 23', type:'multi' },
-  11: { short:'📞 SMS-T27 Email-V24', full:'1st call within first half of shift\nSMS Template 27 to be sent immediately after 1st call\nValue Email Template 24', type:'multi' },
-  10: { short:'📞 SMS-T28 Email-V25', full:'1st call within first half of shift\nSMS Template 28 to be sent immediately after 1st call\nValue Email Template 25', type:'multi' },
-   9: { short:'📞 SMS-T29 Email-V26', full:'1st call within first half of shift\nSMS Template 29 to be sent immediately after 1st call\nValue Email Template 26', type:'multi' },
-   8: { short:'📞 SMS-T30 Email-V27', full:'1st call within first half of shift\nSMS Template 30 to be sent immediately after 1st call\nValue Email Template 27', type:'multi' },
-   7: { short:'📞 SMS-T31 Email-V28', full:'1st call within first half of shift\nSMS Template 31 to be sent immediately after 1st call\nValue Email Template 28', type:'multi' },
-   6: { short:'📞 SMS-T32 Email-V29', full:'1st call within first half of shift\nSMS Template 32 to be sent immediately after 1st call\nValue Email Template 29', type:'multi' },
-   5: { short:'📞 SMS-T33 Email-V30', full:'1st call within first half of shift\nSMS Template 33 to be sent immediately after 1st call\nValue Email Template 30', type:'multi' },
-   4: { short:'📞 SMS-T34 Email-V31', full:'1st call within first half of shift\nSMS Template 34 to be sent immediately after 1st call\nValue Email Template 31', type:'multi' },
-   3: { short:'📞 SMS-T35 Email-V32', full:'1st call within first half of shift\nSMS Template 35 to be sent immediately after 1st call\nValue Email Template 32', type:'multi' },
-   2: { short:'📞 SMS-T36 Email-V33', full:'1st call within first half of shift\nSMS Template 36 to be sent immediately after 1st call\nValue Email Template 33', type:'multi' },
-   1: { short:'📞 SMS-T37 Email-V34', full:'1st call within first half of shift\nSMS Template 37 to be sent immediately after 1st call\nValue Email Template 34', type:'multi' },
-   0: { short:'📞 SMS-T38 Email-V34', full:'1st call within first half of shift\nSMS Template 38 to be sent immediately after 1st call\nValue Email Template 34', type:'multi' },
+  14: { steps:['1st call within first half of shift','SMS Template 25 immediately after 1st call','Value Email Template 21'], type:'multi' },
+  13: { steps:['1st call within first half of shift','SMS Template 26 immediately after 1st call','Value Email Template 22'], type:'multi' },
+  12: { steps:['1st call within first half of shift','SMS Template 26 immediately after 1st call','Value Email Template 23'], type:'multi' },
+  11: { steps:['1st call within first half of shift','SMS Template 27 immediately after 1st call','Value Email Template 24'], type:'multi' },
+  10: { steps:['1st call within first half of shift','SMS Template 28 immediately after 1st call','Value Email Template 25'], type:'multi' },
+   9: { steps:['1st call within first half of shift','SMS Template 29 immediately after 1st call','Value Email Template 26'], type:'multi' },
+   8: { steps:['1st call within first half of shift','SMS Template 30 immediately after 1st call','Value Email Template 27'], type:'multi' },
+   7: { steps:['1st call within first half of shift','SMS Template 31 immediately after 1st call','Value Email Template 28'], type:'multi' },
+   6: { steps:['1st call within first half of shift','SMS Template 32 immediately after 1st call','Value Email Template 29'], type:'multi' },
+   5: { steps:['1st call within first half of shift','SMS Template 33 immediately after 1st call','Value Email Template 30'], type:'multi' },
+   4: { steps:['1st call within first half of shift','SMS Template 34 immediately after 1st call','Value Email Template 31'], type:'multi' },
+   3: { steps:['1st call within first half of shift','SMS Template 35 immediately after 1st call','Value Email Template 32'], type:'multi' },
+   2: { steps:['1st call within first half of shift','SMS Template 36 immediately after 1st call','Value Email Template 33'], type:'multi' },
+   1: { steps:['1st call within first half of shift','SMS Template 37 immediately after 1st call','Value Email Template 34'], type:'multi' },
+   0: { steps:['1st call within first half of shift','SMS Template 38 immediately after 1st call','Value Email Template 34'], type:'multi' },
 };
 
 const DAY1_ACTION = {
-  short:'📞×5 SMS-T1 Email-Est',
-  full:'1st call within 30 Seconds\nSMS Template 1 to be sent immediately after 1st call\n2nd call within 5 Mins\nEmail with Estimate (Not connected template)\n3rd call within 15 Mins\n4th call within 1 hour\nFinal call before EOD',
-  type:'multi'
+  steps:[
+    '1st call within 30 Seconds',
+    'SMS Template 1 immediately after 1st call',
+    '2nd call within 5 Mins',
+    'Email with Estimate (Not connected template)',
+    '3rd call within 15 Mins',
+    '4th call within 1 hour',
+    'Final call before EOD'
+  ], type:'multi'
 };
 const DAY2_ACTION = {
-  short:'📞×2 SMS-T2 Email-V1',
-  full:'1st call within first half of shift\nSMS Template 2 to be sent immediately after 1st call\nValue Email Template 1\n2nd call 2nd half of the shift',
-  type:'multi'
+  steps:[
+    '1st call within first half of shift',
+    'SMS Template 2 immediately after 1st call',
+    'Value Email Template 1',
+    '2nd call 2nd half of the shift'
+  ], type:'multi'
 };
 
 const STRATEGY = {
   'Bucket 1': {
-    1:  DAY1_ACTION,
-    2:  DAY2_ACTION,
-    3:  { short:'📞×2 SMS-T3',        full:'1st call within first half of shift\nSMS Template 3 to be sent immediately after 1st call\n2nd call 2nd half of the shift', type:'multi' },
-    4:  { short:'📞 SMS-T4 Email-T2', full:'1st call within first half of shift\nSMS Template 4 to be sent immediately after 1st call\nEmail Template 2', type:'multi' },
-    5:  { short:'📞 SMS-T5',          full:'1st call within first half of shift\nSMS Template 5 to be sent immediately after 1st call', type:'multi' },
+    1: DAY1_ACTION,
+    2: DAY2_ACTION,
+    3: { steps:['1st call within first half of shift','SMS Template 3 immediately after 1st call','2nd call 2nd half of the shift'], type:'multi' },
+    4: { steps:['1st call within first half of shift','SMS Template 4 immediately after 1st call','Email Template 2'], type:'multi' },
+    5: { steps:['1st call within first half of shift','SMS Template 5 immediately after 1st call'], type:'multi' },
   },
   'Bucket 2': {
     1:  DAY1_ACTION,
     2:  DAY2_ACTION,
-    3:  { short:'📞 SMS-T6',          full:'1st call within first half of shift\nSMS Template 6 to be sent immediately after 1st call', type:'multi' },
-    5:  { short:'📞 Email-V3',        full:'1st call within first half of shift\nValue Email Template 3', type:'multi' },
-    6:  { short:'SMS-T7',             full:'Send SMS Template 7', type:'sms' },
-    7:  { short:'📞',                 full:'1st call within first half of shift', type:'call' },
-    9:  { short:'Email-T4',           full:'Send Email Template 4', type:'email' },
-    10: { short:'SMS-T8',             full:'Send SMS Template 8', type:'sms' },
-    11: { short:'📞',                 full:'1st call within first half of shift', type:'call' },
-    13: { short:'SMS-T9',             full:'Send SMS Template 9', type:'sms' },
-    14: { short:'Email-T5',           full:'Send Email Template 5', type:'email' },
+    3:  { steps:['1st call within first half of shift','SMS Template 6 immediately after 1st call'], type:'multi' },
+    5:  { steps:['1st call within first half of shift','Value Email Template 3'], type:'multi' },
+    6:  { steps:['Send SMS Template 7'], type:'sms' },
+    7:  { steps:['1st call within first half of shift'], type:'call' },
+    9:  { steps:['Send Email Template 4'], type:'email' },
+    10: { steps:['Send SMS Template 8'], type:'sms' },
+    11: { steps:['1st call within first half of shift'], type:'call' },
+    13: { steps:['Send SMS Template 9'], type:'sms' },
+    14: { steps:['Send Email Template 5'], type:'email' },
   },
   'Bucket 3': {
     1:  DAY1_ACTION,
     2:  DAY2_ACTION,
-    3:  { short:'📞 SMS-T10',         full:'1st call within first half of shift\nSMS Template 10 to be sent immediately after 1st call', type:'multi' },
-    5:  { short:'Email-T6',           full:'Send Email Template 6', type:'email' },
-    7:  { short:'📞',                 full:'1st call within first half of shift', type:'call' },
-    10: { short:'SMS-T11',            full:'Send SMS Template 11', type:'sms' },
-    14: { short:'Email-T7',           full:'Send Email Template 7', type:'email' },
-    18: { short:'📞',                 full:'1st call within first half of shift', type:'call' },
-    21: { short:'SMS-T12',            full:'Send SMS Template 12', type:'sms' },
-    25: { short:'Email-T8',           full:'Send Email Template 8', type:'email' },
-    30: { short:'📞',                 full:'1st call within first half of shift', type:'call' },
-    40: { short:'SMS-T13',            full:'Send SMS Template 13', type:'sms' },
-    45: { short:'Email-T9',           full:'Send Email Template 9', type:'email' },
+    3:  { steps:['1st call within first half of shift','SMS Template 10 immediately after 1st call'], type:'multi' },
+    5:  { steps:['Send Email Template 6'], type:'email' },
+    7:  { steps:['1st call within first half of shift'], type:'call' },
+    10: { steps:['Send SMS Template 11'], type:'sms' },
+    14: { steps:['Send Email Template 7'], type:'email' },
+    18: { steps:['1st call within first half of shift'], type:'call' },
+    21: { steps:['Send SMS Template 12'], type:'sms' },
+    25: { steps:['Send Email Template 8'], type:'email' },
+    30: { steps:['1st call within first half of shift'], type:'call' },
+    40: { steps:['Send SMS Template 13'], type:'sms' },
+    45: { steps:['Send Email Template 9'], type:'email' },
   },
   'Bucket 4': {
     1:   DAY1_ACTION,
     2:   DAY2_ACTION,
-    3:   { short:'📞',                    full:'1st call within first half of shift', type:'call' },
-    5:   { short:'Email-T10',             full:'Send Email Template 10', type:'email' },
-    10:  { short:'SMS-T14',               full:'Send SMS Template 14', type:'sms' },
-    14:  { short:'Email-T11',             full:'Send Email Template 11', type:'email' },
-    21:  { short:'📞',                    full:'1st call within first half of shift', type:'call' },
-    30:  { short:'Email-T12',             full:'Send Email Template 12', type:'email' },
-    45:  { short:'SMS-T15',               full:'Send SMS Template 15', type:'sms' },
-    60:  { short:'Template-16',           full:'Send Template 16', type:'email' },
-    75:  { short:'📞 SMS-T17 Email-V13',  full:'1st call within first half of shift\nSMS Template 17 to be sent immediately after 1st call\nValue Email Template 13', type:'multi' },
-    90:  { short:'📞 SMS-T18 Email-V14',  full:'1st call within first half of shift\nSMS Template 18 to be sent immediately after 1st call\nValue Email Template 14', type:'multi' },
-    105: { short:'📞 SMS-T19 Email-V15',  full:'1st call within first half of shift\nSMS Template 19 to be sent immediately after 1st call\nValue Email Template 15', type:'multi' },
-    120: { short:'📞 SMS-T20 Email-V16',  full:'1st call within first half of shift\nSMS Template 20 to be sent immediately after 1st call\nValue Email Template 16', type:'multi' },
-    135: { short:'📞 SMS-T21 Email-V17',  full:'1st call within first half of shift\nSMS Template 21 to be sent immediately after 1st call\nValue Email Template 17', type:'multi' },
-    150: { short:'📞 SMS-T22 Email-V18',  full:'1st call within first half of shift\nSMS Template 22 to be sent immediately after 1st call\nValue Email Template 18', type:'multi' },
-    165: { short:'📞 SMS-T22 Email-V19',  full:'1st call within first half of shift\nSMS Template 22 to be sent immediately after 1st call\nValue Email Template 19', type:'multi' },
-    180: { short:'📞 SMS-T24 Email-V20',  full:'1st call within first half of shift\nSMS Template 24 to be sent immediately after 1st call\nValue Email Template 20', type:'multi' },
+    3:   { steps:['1st call within first half of shift'], type:'call' },
+    5:   { steps:['Send Email Template 10'], type:'email' },
+    10:  { steps:['Send SMS Template 14'], type:'sms' },
+    14:  { steps:['Send Email Template 11'], type:'email' },
+    21:  { steps:['1st call within first half of shift'], type:'call' },
+    30:  { steps:['Send Email Template 12'], type:'email' },
+    45:  { steps:['Send SMS Template 15'], type:'sms' },
+    60:  { steps:['Send Template 16'], type:'email' },
+    75:  { steps:['1st call within first half of shift','SMS Template 17 immediately after 1st call','Value Email Template 13'], type:'multi' },
+    90:  { steps:['1st call within first half of shift','SMS Template 18 immediately after 1st call','Value Email Template 14'], type:'multi' },
+    105: { steps:['1st call within first half of shift','SMS Template 19 immediately after 1st call','Value Email Template 15'], type:'multi' },
+    120: { steps:['1st call within first half of shift','SMS Template 20 immediately after 1st call','Value Email Template 16'], type:'multi' },
+    135: { steps:['1st call within first half of shift','SMS Template 21 immediately after 1st call','Value Email Template 17'], type:'multi' },
+    150: { steps:['1st call within first half of shift','SMS Template 22 immediately after 1st call','Value Email Template 18'], type:'multi' },
+    165: { steps:['1st call within first half of shift','SMS Template 22 immediately after 1st call','Value Email Template 19'], type:'multi' },
+    180: { steps:['1st call within first half of shift','SMS Template 24 immediately after 1st call','Value Email Template 20'], type:'multi' },
   },
 };
 
@@ -634,7 +591,8 @@ function parseCSV(text) {
   const lines = text.trim().split('\n');
   if (lines.length < 1) return [];
   const headerMap = {
-    'id':'id','lead id':'id','lid':'id',
+    'id':'id','lead id':'id','salesjet id':'id','lid':'id',
+    'cust name':'custName','customer name':'custName','name':'custName',
     'agent':'agent','sales agent':'agent','user':'agent',
     'received':'received','received time ist':'received','date received':'received',
     'move':'move','move date':'move',
@@ -761,7 +719,8 @@ function buildHead() {
   const head = document.getElementById('tableHead');
   const cols = [
     {key:'agent',    label:'Agent'},
-    {key:'id',       label:'Lead ID'},
+    {key:'id',       label:'Salesjet ID'},
+    {key:'custName', label:'Cust Name'},
     {key:'received', label:'Received Date'},
     {key:'move',     label:'Move Date'},
     {key:'bucket',   label:'Bucket Type'},
@@ -833,10 +792,6 @@ function updateStats() {
 }
 
 function renderTable() {
-  // Clear popup store on each render to avoid unbounded growth
-  POPUP_STORE.clear();
-  _popupIdCounter = 0;
-
   const perPage = parseInt(document.getElementById('perPage').value);
   const sorted = [...filtered].sort((a, b) => {
     let av = a[sortKey] || '', bv = b[sortKey] || '';
@@ -856,7 +811,7 @@ function renderTable() {
 
   const body = document.getElementById('tableBody');
   if (pageData.length === 0) {
-    body.innerHTML = `<tr><td colspan="${6+DATE_COLS.length}" class="empty-state">
+    body.innerHTML = `<tr><td colspan="${7+DATE_COLS.length}" class="empty-state">
       <div class="big">🔍</div><div>No leads match your filters</div></td></tr>`;
     return;
   }
@@ -868,43 +823,45 @@ function renderTable() {
     const agentClass = 'agent-' + (r.agent || 'Unknown');
 
     html += `<tr>
-      <td><span class="agent-badge ${agentClass}">${r.agent || '–'}</span></td>
-      <td><span class="lead-id">${r.id || '–'}</span></td>
-      <td><span class="received-date">${formatDateShort(r.received)}</span></td>
+      <td><span class="agent-badge ${agentClass}">${r.agent||'–'}</span></td>
+      <td style="font-family:'Space Mono',monospace;font-size:11px;">${r.id||'–'}</td>
+      <td style="font-size:12px;">${r.custName||'–'}</td>
+      <td>${r.received ? formatDateShort(r.received) : '–'}</td>
       <td><span class="move-date">${formatDateShort(r.move)}</span></td>
       <td>${r.bucket ? `<span class="bucket-badge ${bc}">${r.bucket}</span>` : '–'}</td>
       <td><span class="status-text ${sc}" title="${r.status}">${r.status || '–'}</span></td>`;
 
     DATE_COLS.forEach(d => {
       const isToday = d === TODAY;
-      let cellContent = '';
 
       if (r.received && r.move && d >= r.received && d <= r.move) {
         const dayNum     = dateDiffDays(d, r.received) + 1;
         const daysToMove = dateDiffDays(r.move, d);
         const isMoveDay  = d === r.move;
-        const pillClass  = isMoveDay ? 'move-day' : `${bc}-day`;
 
         const action = getStrategyAction(r.bucket, dayNum, daysToMove);
-        let actionHtml = '';
-        if (action) {
-          const colorClass = action.type === 'multi'  ? 'has-multi'
-                           : action.type === 'call'   ? 'has-call'
-                           : action.type === 'sms'    ? 'has-sms'
-                           : action.type === 'email'  ? 'has-email' : '';
+        const colorClass = isMoveDay ? 'bc-move' : `bc-${bc}`;
 
-          // ← KEY FIX: store full text in JS map, pass only numeric id in HTML
-          const pid = registerPopup(`Day ${dayNum}`, action.full);
-          actionHtml = `<div class="action-label ${colorClass}" data-pid="${pid}" onmouseenter="showPopup(event,this)" onmouseleave="hidePopup()">${action.short}</div>`;
+        let innerHtml = '';
+        if (action && action.steps && action.steps.length > 0) {
+          // If move day, show small indicator dot
+          const moveDot = isMoveDay ? '<span class="move-day-dot" title="Move Day"></span>' : '';
+          const stepsHtml = action.steps.map((s, i) =>
+            `<div class="action-line type-${action.type}">
+              <span class="action-num type-${action.type}">${i+1}</span>
+              <span>${s}</span>
+            </div>`
+          ).join('');
+          innerHtml = `<div class="inline-actions">${moveDot ? `<div style="margin-bottom:3px">${moveDot}<span style="font-size:9px;color:#3fb950;font-family:'Space Mono',monospace">MOVE DAY</span></div>` : ''}${stepsHtml}</div>`;
+        } else if (isMoveDay) {
+          // Move day but no action
+          innerHtml = `<div style="font-size:9px;color:#3fb950;font-family:'Space Mono',monospace;"><span class="move-day-dot"></span>MOVE DAY</div>`;
         }
 
-        cellContent = `<div class="day-cell-inner">
-          <span class="day-pill ${pillClass}">Day ${dayNum}</span>
-          ${actionHtml}
-        </div>`;
+        html += `<td class="day-cell has-content ${colorClass}${isToday?' today-col':''}">${innerHtml}</td>`;
+      } else {
+        html += `<td class="day-cell${isToday?' today-col':''}"></td>`;
       }
-
-      html += `<td class="day-cell${isToday?' today-col':''}">${cellContent}</td>`;
     });
 
     html += '</tr>';
@@ -953,37 +910,6 @@ document.addEventListener('keydown', e => {
   if (e.key === 'ArrowRight') goPage(currentPage+1);
   if (e.key === 'ArrowLeft')  goPage(currentPage-1);
 });
-
-// ─────────────────────────────────────────────
-// POPUP TOOLTIP  ← FIXED
-// Reads content from POPUP_STORE by data-pid, so newlines are preserved.
-// ─────────────────────────────────────────────
-function showPopup(event, el) {
-  const pid = parseInt(el.getAttribute('data-pid'), 10);
-  const data = POPUP_STORE.get(pid);
-  if (!data) return;
-
-  const popup = document.getElementById('fu-popup');
-  document.getElementById('popup-day-label').textContent = '📋 ' + data.dayLabel + ' — Follow-up Actions';
-
-  // Split on real newline characters (preserved in JS strings)
-  const steps = data.fullText.split('\n').filter(s => s.trim());
-  document.getElementById('popup-steps').innerHTML = steps.map((s, i) =>
-    `<div class="popup-step"><span class="step-num">${i+1}</span><span>${s.trim()}</span></div>`
-  ).join('');
-
-  popup.style.display = 'block';
-  const x = event.clientX + 14;
-  const y = event.clientY + 14;
-  const pw = popup.offsetWidth  || 300;
-  const ph = popup.offsetHeight || 140;
-  popup.style.left = (x + pw > window.innerWidth  ? x - pw - 28 : x) + 'px';
-  popup.style.top  = (y + ph > window.innerHeight ? y - ph - 28 : y) + 'px';
-}
-
-function hidePopup() {
-  document.getElementById('fu-popup').style.display = 'none';
-}
 
 loadData();
 setInterval(loadData, 300000);
