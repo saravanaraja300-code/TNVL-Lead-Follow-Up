@@ -1,0 +1,824 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lead Tracker Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0d1117;
+  --surface: #161b22;
+  --surface2: #21262d;
+  --surface3: #30363d;
+  --border: #30363d;
+  --text: #e6edf3;
+  --text-muted: #8b949e;
+  --accent: #58a6ff;
+  --accent2: #3fb950;
+  --b1: #ff4d4d;
+  --b1-bg: rgba(255,77,77,0.12);
+  --b2: #f5a623;
+  --b2-bg: rgba(245,166,35,0.12);
+  --b3: #f9d71c;
+  --b3-bg: rgba(249,215,28,0.12);
+  --b4: #58a6ff;
+  --b4-bg: rgba(88,166,255,0.12);
+  --day-bg: #1c2a1c;
+  --day-text: #56d364;
+  --day-border: #238636;
+  --closed-text: #8b949e;
+  --open-text: #58a6ff;
+  --booked-text: #3fb950;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  min-height: 100vh;
+}
+.header {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 16px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+.header-title {
+  font-family: 'Space Mono', monospace;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: -0.5px;
+}
+.header-title span { color: var(--accent); }
+.header-sub {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 2px;
+  font-family: 'Space Mono', monospace;
+}
+.stats-bar {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.stat-pill {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 4px 12px;
+  font-size: 11px;
+  font-family: 'Space Mono', monospace;
+  color: var(--text-muted);
+}
+.stat-pill strong { color: var(--text); }
+
+.controls {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 12px 24px;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.control-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.control-label {
+  font-size: 11px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+select, input[type="date"] {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-family: 'DM Sans', sans-serif;
+  outline: none;
+  cursor: pointer;
+  transition: border-color 0.15s;
+}
+select:hover, input[type="date"]:hover { border-color: var(--accent); }
+select:focus, input[type="date"]:focus { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(88,166,255,0.15); }
+select option { background: var(--surface2); }
+
+.btn {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 6px 14px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-family: 'DM Sans', sans-serif;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+.btn:hover { background: var(--surface3); border-color: var(--accent); color: var(--accent); }
+.btn-primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #0d1117;
+  font-weight: 600;
+}
+.btn-primary:hover { background: #79c0ff; border-color: #79c0ff; color: #0d1117; }
+
+.result-bar {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 8px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.result-count {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-family: 'Space Mono', monospace;
+}
+.result-count strong { color: var(--accent); }
+
+.pagination {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.page-btn {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-family: 'Space Mono', monospace;
+  cursor: pointer;
+  transition: all 0.15s;
+  min-width: 28px;
+  text-align: center;
+}
+.page-btn:hover { border-color: var(--accent); color: var(--accent); }
+.page-btn.active { background: var(--accent); border-color: var(--accent); color: #0d1117; font-weight: 700; }
+.page-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+.table-wrap {
+  overflow-x: auto;
+  overflow-y: auto;
+  max-height: calc(100vh - 200px);
+}
+table {
+  border-collapse: collapse;
+  min-width: 100%;
+  width: max-content;
+}
+thead th {
+  background: var(--surface);
+  color: var(--text-muted);
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  padding: 10px 12px;
+  border-bottom: 2px solid var(--border);
+  border-right: 1px solid var(--border);
+  white-space: nowrap;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  cursor: pointer;
+  user-select: none;
+  transition: color 0.15s;
+  text-align: left;
+}
+thead th:hover { color: var(--accent); }
+thead th.date-col {
+  background: #0d1f2d;
+  color: #4d9de0;
+  border-bottom-color: #1e4d7a;
+  text-align: center;
+  min-width: 86px;
+}
+thead th.date-col.today {
+  background: #0d2a1a;
+  color: var(--accent2);
+  border-bottom-color: var(--day-border);
+}
+thead th:first-child,
+thead th:nth-child(2) {
+  position: sticky;
+  z-index: 20;
+}
+thead th:first-child { left: 0; }
+thead th:nth-child(2) { left: 110px; }
+
+tbody tr {
+  border-bottom: 1px solid rgba(48,54,61,0.5);
+  transition: background 0.1s;
+}
+tbody tr:hover { background: rgba(88,166,255,0.04); }
+tbody td {
+  padding: 8px 12px;
+  border-right: 1px solid rgba(48,54,61,0.3);
+  white-space: nowrap;
+  vertical-align: middle;
+}
+tbody td:first-child,
+tbody td:nth-child(2) {
+  position: sticky;
+  background: var(--bg);
+  z-index: 5;
+}
+tbody td:first-child { left: 0; }
+tbody td:nth-child(2) { left: 110px; }
+tbody tr:hover td:first-child,
+tbody tr:hover td:nth-child(2) { background: #121920; }
+
+.agent-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+}
+.lead-id {
+  font-family: 'Space Mono', monospace;
+  font-size: 11px;
+  color: var(--accent);
+  font-weight: 700;
+}
+.received-date, .move-date {
+  font-family: 'Space Mono', monospace;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+.move-date { color: var(--text); }
+.days-left {
+  font-size: 11px;
+  font-family: 'Space Mono', monospace;
+  color: var(--text-muted);
+}
+
+.bucket-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 700;
+  font-family: 'Space Mono', monospace;
+  letter-spacing: 0.3px;
+}
+.b1 { background: var(--b1-bg); color: var(--b1); border: 1px solid rgba(255,77,77,0.3); }
+.b2 { background: var(--b2-bg); color: var(--b2); border: 1px solid rgba(245,166,35,0.3); }
+.b3 { background: var(--b3-bg); color: var(--b3); border: 1px solid rgba(249,215,28,0.3); }
+.b4 { background: var(--b4-bg); color: var(--b4); border: 1px solid rgba(88,166,255,0.3); }
+
+.status-text {
+  font-size: 11px;
+  max-width: 200px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.status-open { color: var(--open-text); }
+.status-closed { color: var(--closed-text); }
+.status-booked { color: var(--booked-text); font-weight: 600; }
+.status-new { color: #e3b341; }
+
+.day-cell {
+  text-align: center;
+  min-width: 86px;
+}
+.day-pill {
+  display: inline-block;
+  background: var(--day-bg);
+  color: var(--day-text);
+  border: 1px solid var(--day-border);
+  border-radius: 4px;
+  padding: 2px 8px;
+  font-size: 10px;
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+}
+.day-pill.b1-day { background: rgba(255,77,77,0.1); color: var(--b1); border-color: rgba(255,77,77,0.3); }
+.day-pill.b2-day { background: rgba(245,166,35,0.1); color: var(--b2); border-color: rgba(245,166,35,0.3); }
+.day-pill.b3-day { background: rgba(249,215,28,0.1); color: var(--b3); border-color: rgba(249,215,28,0.3); }
+.day-pill.b4-day { background: rgba(88,166,255,0.1); color: var(--b4); border-color: rgba(88,166,255,0.3); }
+.day-pill.move-day { 
+  background: rgba(63,185,80,0.15); 
+  color: #3fb950; 
+  border-color: rgba(63,185,80,0.4); 
+  box-shadow: 0 0 6px rgba(63,185,80,0.2);
+}
+.today-col { background: rgba(63,185,80,0.03); }
+
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--text-muted);
+  font-family: 'Space Mono', monospace;
+}
+.empty-state .big { font-size: 32px; margin-bottom: 8px; }
+
+.sort-icon { margin-left: 4px; opacity: 0.4; font-size: 10px; }
+.sort-icon.active { opacity: 1; color: var(--accent); }
+
+/* Agent colors */
+.agent-Alexander { background: rgba(136,46,185,0.2); color: #c678dd; }
+.agent-Anthony { background: rgba(97,175,254,0.2); color: #61afef; }
+.agent-Arthur { background: rgba(86,182,194,0.2); color: #56b6c2; }
+.agent-Daniel { background: rgba(229,192,123,0.2); color: #e5c07b; }
+.agent-Dustin { background: rgba(190,80,70,0.2); color: #e06c75; }
+.agent-Jessica { background: rgba(255,121,198,0.2); color: #ff79c6; }
+.agent-Myles { background: rgba(80,200,120,0.2); color: #50fa7b; }
+.agent-Noah { background: rgba(241,250,140,0.2); color: #f1fa8c; }
+.agent-Simon { background: rgba(139,233,253,0.2); color: #8be9fd; }
+.agent-Solomon { background: rgba(255,85,85,0.2); color: #ff5555; }
+.agent-Thomas { background: rgba(255,183,77,0.2); color: #ffb74d; }
+.agent-William { background: rgba(102,217,239,0.2); color: #66d9ef; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <div class="header-title">Lead <span>Tracker</span> Dashboard</div>
+    <div class="header-sub" id="headerSub">Apr 21 – Apr 30, 2026 &nbsp;|&nbsp; Move Timeline View</div>
+  </div>
+  <div class="stats-bar">
+    <div class="stat-pill" id="statTotal"><strong>–</strong> Total</div>
+    <div class="stat-pill" id="statOpen"><strong>–</strong> Open</div>
+    <div class="stat-pill" id="statBooked"><strong>–</strong> Booked</div>
+    <div class="stat-pill" id="statClosed"><strong>–</strong> Closed</div>
+  </div>
+</div>
+
+<div class="controls">
+  <div class="control-group">
+    <span class="control-label">Agent</span>
+    <select id="agentFilter">
+      <option value="">All Agents</option>
+    </select>
+  </div>
+  <div class="control-group">
+    <span class="control-label">Bucket</span>
+    <select id="bucketFilter">
+      <option value="">All Buckets</option>
+      <option value="Bucket 1">Bucket 1</option>
+      <option value="Bucket 2">Bucket 2</option>
+      <option value="Bucket 3">Bucket 3</option>
+      <option value="Bucket 4">Bucket 4</option>
+    </select>
+  </div>
+  <div class="control-group">
+    <span class="control-label">Timeline From</span>
+    <input type="date" id="moveDateFrom" value="2026-04-22">
+  </div>
+  <div class="control-group">
+    <span class="control-label">To</span>
+    <input type="date" id="moveDateTo" value="2026-04-22">
+  </div>
+  <button class="btn btn-primary" onclick="applyFilters()">Apply</button>
+  <button class="btn" onclick="resetFilters()">Reset</button>
+  <button class="btn" onclick="loadData()">🔄 Refresh Data</button>
+  <div style="margin-left:auto" class="control-group">
+    <span class="control-label">Per Page</span>
+    <select id="perPage">
+      <option value="25">25</option>
+      <option value="50" selected>50</option>
+      <option value="100">100</option>
+      <option value="200">200</option>
+    </select>
+  </div>
+</div>
+
+<div class="result-bar">
+  <div class="result-count" id="resultCount">Showing <strong>0</strong> of <strong>0</strong> leads</div>
+  <div class="pagination" id="pagination"></div>
+</div>
+
+<div class="table-wrap">
+  <table id="mainTable">
+    <thead id="tableHead"></thead>
+    <tbody id="tableBody"></tbody>
+  </table>
+</div>
+
+<script>
+// Paste your Google Sheets "Publish to web" CSV link below:
+const GOOGLE_SHEETS_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSXsdx0UFbCKXSCYwGzxEC5iRO-L31puQ_Ta3xBGRIwyxCW7-PGSmsRfX9bJ3yFdY6DB7RzN98WvcRe/pub?output=csv';
+let RAW = [];
+
+async function loadData() {
+  if (GOOGLE_SHEETS_CSV_URL === 'YOUR_GOOGLE_SHEETS_URL_HERE') {
+    showInitialState();
+    return;
+  }
+
+  showLoadingState();
+  try {
+    const response = await fetch('http://localhost:3030/api/data');
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const text = await response.text();
+
+    RAW = parseCSV(text);
+    if (RAW.length === 0) {
+      showError('No active leads found. All rows may be Booked/Closed, or headers may not match.');
+      return;
+    }
+    buildHead();
+    initAgents();
+    applyFilters();
+    updateLastRefreshed();
+  } catch (err) {
+    showError('Error loading data: ' + err.message);
+    console.error('Load error:', err);
+  }
+}
+
+function showInitialState() {
+  document.getElementById('tableBody').innerHTML = `
+    <tr><td colspan="20" style="text-align:center;padding:80px;color:var(--text-muted);font-family:'Space Mono',monospace;background:var(--surface2);">
+      <div style="font-size:24px;margin-bottom:10px;">📊</div>
+      Please add your Google Sheets CSV link to the GOOGLE_SHEETS_CSV_URL variable in the code.
+    </td></tr>`;
+}
+function parseCSV(text) {
+  const lines = text.trim().split('\n');
+  if (lines.length < 1) return [];
+
+  // Robust Header Mapping
+  const headerMap = {
+    'id': 'id', 'lead id': 'id', 'lid': 'id',
+    'agent': 'agent', 'sales agent': 'agent', 'user': 'agent',
+    'received': 'received', 'received time ist': 'received', 'date received': 'received',
+    'move': 'move', 'move date': 'move',
+    'bucket': 'bucket', 'bucket type': 'bucket', 'category': 'bucket',
+    'daysleft': 'daysLeft', 'days left': 'daysLeft', 'timeline': 'daysLeft',
+    'status': 'status', 'lead status': 'status'
+  };
+
+  const rawHeaders = lines[0].split(',').map(h => h.trim().replace(/"/g, '').toLowerCase());
+  const headers = rawHeaders.map(h => headerMap[h] || h);
+
+  return lines.slice(1).map(line => {
+    // CSV parsing with quote awareness
+    const values = [];
+    let cur = '';
+    let inQ = false;
+    for (let char of line) {
+      if (char === '"') inQ = !inQ;
+      else if (char === ',' && !inQ) { values.push(cur.trim()); cur = ''; }
+      else cur += char;
+    }
+    values.push(cur.trim());
+
+    const obj = {};
+    headers.forEach((h, i) => {
+      let val = (values[i] || '').replace(/^"|"$/g, '').trim();
+      
+      // Auto-format dates: Convert DD-MM-YYYY or DD-MM-YYYY HH:MM to YYYY-MM-DD
+      if (h === 'received' || h === 'move') {
+        // Strip time component if present (e.g. "21-04-2026 18:03" → "21-04-2026")
+        const datePart = val.split(' ')[0];
+        if (/^\d{2}-\d{2}-\d{4}$/.test(datePart)) {
+          const [d, m, y] = datePart.split('-');
+          val = `${y}-${m}-${d}`;
+        }
+      }
+      
+      // Clean Buckets: "Bucket-1" -> "Bucket 1"
+      if (h === 'bucket' && val.includes('-')) {
+        val = val.replace('-', ' ');
+      }
+      
+      obj[h] = val;
+    });
+    return obj;
+  }).filter(r => {
+    if (!r.id || r.id === '' || !r.agent) return false;
+    const s = (r.status || '').toLowerCase();
+    if (s.includes('booked') || s.includes('closed')) return false;
+    return true;
+  });
+}
+
+function showLoadingState() {
+  document.getElementById('tableBody').innerHTML = `
+    <tr><td colspan="20" style="text-align:center;padding:80px;color:var(--text-muted);font-family:'Space Mono',monospace;background:var(--surface2);">
+      <div style="font-size:24px;margin-bottom:10px;">⏳</div>
+      Syncing with Zoho Sheet...
+    </td></tr>`;
+}
+
+function showError(msg) {
+  document.getElementById('tableBody').innerHTML = `
+    <tr><td colspan="20" style="text-align:center;padding:80px;color:#ff4d4d;font-family:'Space Mono',monospace;background:var(--surface2);">
+      <div style="font-size:24px;margin-bottom:10px;">⚠️</div>
+      ${msg}
+    </td></tr>`;
+}
+
+function updateLastRefreshed() {
+  const now = new Date();
+  const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  let lastRefEl = document.getElementById('lastRefreshed');
+  if (!lastRefEl) {
+    const parent = document.getElementById('headerSub');
+    lastRefEl = document.createElement('span');
+    lastRefEl.id = 'lastRefreshed';
+    lastRefEl.style.marginLeft = '16px';
+    lastRefEl.style.paddingLeft = '16px';
+    lastRefEl.style.borderLeft = '1px solid var(--border)';
+    lastRefEl.style.opacity = '0.7';
+    parent.appendChild(lastRefEl);
+  }
+  lastRefEl.textContent = `Sync: ${timeStr}`;
+}
+
+const TODAY = '2026-04-22';
+
+// Generate date range from fromDate to toDate
+function generateDateRange(fromDate, toDate) {
+  const dates = [];
+  let current = new Date(fromDate);
+  const end = new Date(toDate);
+  while (current <= end) {
+    dates.push(current.toISOString().slice(0, 10));
+    current.setDate(current.getDate() + 1);
+  }
+  return dates;
+}
+
+// Active date columns (controlled by the date picker)
+let DATE_COLS = generateDateRange('2026-04-01', '2026-04-30');
+
+let filtered = [];
+let currentPage = 1;
+
+function formatDateShort(d) {
+  if(!d) return '';
+  const [y,m,day] = d.split('-');
+  return `${day}-${m}-${y.slice(2)}`;
+}
+
+function dateDiffDays(a, b) {
+  return Math.round((new Date(a) - new Date(b)) / 86400000);
+}
+
+function getBucketClass(bucket) {
+  if(!bucket) return '';
+  if(bucket.includes('1')) return 'b1';
+  if(bucket.includes('2')) return 'b2';
+  if(bucket.includes('3')) return 'b3';
+  if(bucket.includes('4')) return 'b4';
+  return '';
+}
+
+function getStatusClass(status) {
+  if(!status) return '';
+  const s = status.toLowerCase();
+  if(s.includes('open')) return 'status-open';
+  if(s.includes('booked')) return 'status-booked';
+  if(s.includes('closed')) return 'status-closed';
+  if(s === 'new') return 'status-new';
+  if(s.includes('follow up')) return 'status-open';
+  return '';
+}
+
+function buildHead() {
+  const head = document.getElementById('tableHead');
+  const cols = [
+    {key:'agent', label:'Agent'},
+    {key:'id', label:'Lead ID'},
+    {key:'received', label:'Received Date'},
+    {key:'move', label:'Move Date'},
+    {key:'bucket', label:'Bucket Type'},
+    {key:'status', label:'Status'},
+  ];
+  let html = '<tr>';
+  cols.forEach(c => {
+    html += `<th onclick="sortBy('${c.key}')" title="Sort by ${c.label}">${c.label}<span class="sort-icon">↕</span></th>`;
+  });
+  DATE_COLS.forEach(d => {
+    const [y,m,day] = d.split('-');
+    const label = `${day}-${m}`;
+    const isToday = d === TODAY;
+    html += `<th class="date-col${isToday?' today':''}">${label}<br><small style="font-size:9px;opacity:0.7">${y}</small></th>`;
+  });
+  html += '</tr>';
+  head.innerHTML = html;
+
+  // Update header subtitle
+  const from = DATE_COLS[0];
+  const to = DATE_COLS[DATE_COLS.length - 1];
+  const fmtFrom = from ? formatMonthDay(from) : '';
+  const fmtTo = to ? formatMonthDay(to) : '';
+  document.getElementById('headerSub').textContent = `${fmtFrom} – ${fmtTo}, ${from ? from.slice(0,4) : ''} \u00a0|\u00a0 Move Timeline View`;
+}
+
+function formatMonthDay(d) {
+  if (!d) return '';
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const [y, m, day] = d.split('-');
+  return `${months[parseInt(m,10)-1]} ${parseInt(day,10)}`;
+}
+
+let sortKey = 'received';
+let sortDir = -1;
+
+function sortBy(key) {
+  if(sortKey === key) sortDir *= -1;
+  else { sortKey = key; sortDir = -1; }
+  renderTable();
+}
+
+function applyFilters() {
+  const agent = document.getElementById('agentFilter').value;
+  const bucket = document.getElementById('bucketFilter').value;
+
+  // Update the visible date columns based on the date pickers
+  const fromDate = document.getElementById('moveDateFrom').value;
+  const toDate = document.getElementById('moveDateTo').value;
+
+  if (fromDate && toDate && fromDate <= toDate) {
+    DATE_COLS = generateDateRange(fromDate, toDate);
+  } else if (fromDate && !toDate) {
+    DATE_COLS = generateDateRange(fromDate, fromDate);
+  } else if (!fromDate && toDate) {
+    DATE_COLS = generateDateRange(toDate, toDate);
+  }
+
+  // Rebuild the table header to show the correct date columns
+  buildHead();
+
+  // Filter rows by agent, bucket, status only (NOT by move date)
+  filtered = RAW.filter(r => {
+    if(agent && r.agent !== agent) return false;
+    if(bucket && r.bucket !== bucket) return false;
+    return true;
+  });
+
+  currentPage = 1;
+  updateStats();
+  renderTable();
+}
+
+function resetFilters() {
+  document.getElementById('agentFilter').value = '';
+  document.getElementById('bucketFilter').value = '';
+  document.getElementById('moveDateFrom').value = '2026-04-22';
+  document.getElementById('moveDateTo').value = '2026-04-22';
+  applyFilters();
+}
+
+function updateStats() {
+  const total = filtered.length;
+  const open = filtered.filter(r => r.status.toLowerCase().includes('open') || r.status.toLowerCase().includes('follow up')).length;
+  const booked = filtered.filter(r => r.status.toLowerCase().includes('booked')).length;
+  const closed = filtered.filter(r => r.status.toLowerCase().includes('closed')).length;
+  document.getElementById('statTotal').innerHTML = `<strong>${total}</strong> Total`;
+  document.getElementById('statOpen').innerHTML = `<strong>${open}</strong> Open`;
+  document.getElementById('statBooked').innerHTML = `<strong>${booked}</strong> Booked`;
+  document.getElementById('statClosed').innerHTML = `<strong>${closed}</strong> Closed`;
+}
+
+function renderTable() {
+  const perPage = parseInt(document.getElementById('perPage').value);
+
+  // Sort
+  const sorted = [...filtered].sort((a,b) => {
+    let av = a[sortKey] || '';
+    let bv = b[sortKey] || '';
+    return av < bv ? -sortDir : av > bv ? sortDir : 0;
+  });
+
+  const total = sorted.length;
+  const pages = Math.max(1, Math.ceil(total / perPage));
+  if(currentPage > pages) currentPage = pages;
+
+  const start = (currentPage-1)*perPage;
+  const pageData = sorted.slice(start, start+perPage);
+
+  document.getElementById('resultCount').innerHTML = `Showing <strong>${start+1}–${Math.min(start+perPage,total)}</strong> of <strong>${total}</strong> leads`;
+
+  renderPagination(pages);
+
+  const body = document.getElementById('tableBody');
+  if(pageData.length === 0) {
+    body.innerHTML = `<tr><td colspan="${6+DATE_COLS.length}" class="empty-state">
+      <div class="big">🔍</div>
+      <div>No leads match your filters</div>
+    </td></tr>`;
+    return;
+  }
+
+  let html = '';
+  pageData.forEach(r => {
+    const bc = getBucketClass(r.bucket);
+    const sc = getStatusClass(r.status);
+    const agentClass = 'agent-' + (r.agent || 'Unknown');
+
+    html += `<tr>
+      <td><span class="agent-badge ${agentClass}">${r.agent || '–'}</span></td>
+      <td><span class="lead-id">${r.id || '–'}</span></td>
+      <td><span class="received-date">${formatDateShort(r.received)}</span></td>
+      <td><span class="move-date">${formatDateShort(r.move)}</span></td>
+      <td>${r.bucket ? `<span class="bucket-badge ${bc}">${r.bucket}</span>` : '–'}</td>
+      <td><span class="status-text ${sc}" title="${r.status}">${r.status || '–'}</span></td>`;
+
+    DATE_COLS.forEach(d => {
+      const isToday = d === TODAY;
+      let cellContent = '';
+      if(r.received && r.move && d >= r.received && d <= r.move) {
+        const dayNum = dateDiffDays(d, r.received) + 1;
+        const isMoveDay = d === r.move;
+        const pillClass = isMoveDay ? 'move-day' : `${bc}-day`;
+        cellContent = `<span class="day-pill ${pillClass}">Day ${dayNum}</span>`;
+      }
+      html += `<td class="day-cell${isToday?' today-col':''}">${cellContent}</td>`;
+    });
+
+    html += '</tr>';
+  });
+
+  body.innerHTML = html;
+}
+
+function renderPagination(pages) {
+  const pg = document.getElementById('pagination');
+  if(pages <= 1) { pg.innerHTML = ''; return; }
+
+  let html = '';
+  html += `<button class="page-btn" onclick="goPage(${currentPage-1})" ${currentPage<=1?'disabled':''}>‹</button>`;
+
+  let start = Math.max(1, currentPage-2);
+  let end = Math.min(pages, start+4);
+  if(end - start < 4) start = Math.max(1, end-4);
+
+  if(start > 1) { html += `<button class="page-btn" onclick="goPage(1)">1</button>`; if(start>2) html += `<span style="color:var(--text-muted);font-size:11px">…</span>`; }
+  for(let i=start; i<=end; i++) {
+    html += `<button class="page-btn${i===currentPage?' active':''}" onclick="goPage(${i})">${i}</button>`;
+  }
+  if(end < pages) { if(end<pages-1) html += `<span style="color:var(--text-muted);font-size:11px">…</span>`; html += `<button class="page-btn" onclick="goPage(${pages})">${pages}</button>`; }
+
+  html += `<button class="page-btn" onclick="goPage(${currentPage+1})" ${currentPage>=pages?'disabled':''}>›</button>`;
+  pg.innerHTML = html;
+}
+
+function goPage(p) {
+  const perPage = parseInt(document.getElementById('perPage').value);
+  const pages = Math.ceil(filtered.length / perPage);
+  if(p<1||p>pages) return;
+  currentPage = p;
+  renderTable();
+  document.querySelector('.table-wrap').scrollTop = 0;
+}
+
+// Init agents
+function initAgents() {
+  const agents = [...new Set(RAW.map(r=>r.agent).filter(Boolean))].sort();
+  const sel = document.getElementById('agentFilter');
+  sel.innerHTML = '<option value="">All Agents</option>';
+  agents.forEach(a => {
+    const opt = document.createElement('option');
+    opt.value = a; opt.textContent = a;
+    sel.appendChild(opt);
+  });
+}
+
+document.getElementById('perPage').addEventListener('change', () => {
+  currentPage = 1;
+  renderTable();
+});
+
+// Keyboard shortcuts
+document.addEventListener('keydown', e => {
+  if(e.key === 'ArrowRight') goPage(currentPage+1);
+  if(e.key === 'ArrowLeft') goPage(currentPage-1);
+});
+
+// Auto-refresh every 5 minutes (300000ms)
+const AUTO_REFRESH_INTERVAL = 300000;
+
+loadData();
+setInterval(loadData, AUTO_REFRESH_INTERVAL);
+</script>
+</body>
+</html>
