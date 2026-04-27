@@ -420,11 +420,16 @@ tbody tr:hover td:nth-child(2) { background: #121920; }
   </div>
   <div class="control-group">
     <span class="control-label">Timeline From</span>
-    <input type="date" id="moveDateFrom" value="2026-04-22">
+    <input type="date" id="moveDateFrom">
   </div>
   <div class="control-group">
     <span class="control-label">To</span>
-    <input type="date" id="moveDateTo" value="2026-04-22">
+    <input type="date" id="moveDateTo">
+  </div>
+  <div class="control-group" style="margin-left:8px;">
+    <label style="display:flex;align-items:center;gap:4px;font-size:11px;color:var(--text-muted);cursor:pointer;font-weight:600;">
+      <input type="checkbox" id="toggleTaskStatus" checked onchange="toggleTaskStatusCol()"> Show Task Status
+    </label>
   </div>
   <button class="btn btn-primary" onclick="applyFilters()">Apply</button>
   <button class="btn" onclick="resetFilters()">Reset</button>
@@ -662,20 +667,38 @@ function updateLastRefreshed() {
 // ─────────────────────────────────────────────
 // DATE UTILS
 // ─────────────────────────────────────────────
-const TODAY = new Date().toISOString().slice(0, 10);
+function getLocalISODate(date) {
+  const tzOffset = date.getTimezoneOffset() * 60000;
+  return (new Date(date - tzOffset)).toISOString().slice(0, 10);
+}
+
+const todayDateObj = new Date();
+const TODAY = getLocalISODate(todayDateObj);
+
+const tomorrowDateObj = new Date();
+tomorrowDateObj.setDate(tomorrowDateObj.getDate() + 1);
+const TOMORROW = getLocalISODate(tomorrowDateObj);
 
 function generateDateRange(fromDate, toDate) {
   const dates = [];
   let current = new Date(fromDate);
   const end = new Date(toDate);
   while (current <= end) {
-    dates.push(current.toISOString().slice(0, 10));
+    dates.push(getLocalISODate(current));
     current.setDate(current.getDate() + 1);
   }
   return dates;
 }
 
-let DATE_COLS = generateDateRange('2026-04-22', '2026-04-22');
+// Initial inputs setup
+setTimeout(() => {
+  if (document.getElementById('moveDateFrom') && !document.getElementById('moveDateFrom').value) {
+    document.getElementById('moveDateFrom').value = TODAY;
+    document.getElementById('moveDateTo').value = TODAY;
+  }
+}, 0);
+
+let DATE_COLS = generateDateRange(TODAY, TODAY);
 let filtered = [];
 let currentPage = 1;
 
@@ -715,7 +738,13 @@ function formatMonthDay(d) {
 // ─────────────────────────────────────────────
 // TABLE BUILD
 // ─────────────────────────────────────────────
+function toggleTaskStatusCol() {
+  buildHead();
+  renderTable();
+}
+
 function buildHead() {
+  const showTask = document.getElementById('toggleTaskStatus') ? document.getElementById('toggleTaskStatus').checked : true;
   const head = document.getElementById('tableHead');
   const cols = [
     {key:'agent',    label:'Agent'},
@@ -726,6 +755,9 @@ function buildHead() {
     {key:'bucket',   label:'Bucket Type'},
     {key:'status',   label:'Status'},
   ];
+  if (showTask) {
+    cols.push({key:'taskStatus', label:'Task Status'});
+  }
   let html = '<tr>';
   cols.forEach(c => {
     html += `<th onclick="sortBy('${c.key}')">${c.label}<span class="sort-icon">↕</span></th>`;
@@ -822,6 +854,9 @@ function renderTable() {
     const sc = getStatusClass(r.status);
     const agentClass = 'agent-' + (r.agent || 'Unknown');
 
+    const showTask = document.getElementById('toggleTaskStatus') ? document.getElementById('toggleTaskStatus').checked : true;
+    const savedTaskStatus = localStorage.getItem('task_status_' + r.id) || '';
+
     html += `<tr>
       <td><span class="agent-badge ${agentClass}">${r.agent||'–'}</span></td>
       <td style="font-family:'Space Mono',monospace;font-size:11px;">${r.id||'–'}</td>
@@ -831,8 +866,26 @@ function renderTable() {
       <td>${r.bucket ? `<span class="bucket-badge ${bc}">${r.bucket}</span>` : '–'}</td>
       <td><span class="status-text ${sc}" title="${r.status}">${r.status || '–'}</span></td>`;
 
+    if (showTask) {
+      html += `<td>
+        <select class="task-status-select" onchange="saveTaskStatus('${r.id}', this.value)" style="width: 110px; padding: 4px; font-size: 11px;">
+          <option value="">Select...</option>
+          <option value="Completed" ${savedTaskStatus === 'Completed' ? 'selected' : ''}>Completed</option>
+          <option value="Partially done" ${savedTaskStatus === 'Partially done' ? 'selected' : ''}>Partially done</option>
+          <option value="Not started" ${savedTaskStatus === 'Not started' ? 'selected' : ''}>Not started</option>
+        </select>
+      </td>`;
+    }
+
     DATE_COLS.forEach(d => {
       const isToday = d === TODAY;
+
+      let taskSymbol = '';
+      if (isToday) {
+         if (savedTaskStatus === 'Completed') taskSymbol = '<div style="margin-top: 4px; display: inline-block;"><span style="font-size: 14px; background: rgba(63,185,80,0.2); padding: 2px 4px; border-radius: 4px; border: 1px solid rgba(63,185,80,0.4);" title="Completed">✅</span></div>';
+         else if (savedTaskStatus === 'Partially done') taskSymbol = '<div style="margin-top: 4px; display: inline-block;"><span style="font-size: 14px; background: rgba(245,166,35,0.2); padding: 2px 4px; border-radius: 4px; border: 1px solid rgba(245,166,35,0.4);" title="Partially done">⏳</span></div>';
+         else if (savedTaskStatus === 'Not started') taskSymbol = '<div style="margin-top: 4px; display: inline-block;"><span style="font-size: 14px; background: rgba(255,77,77,0.2); padding: 2px 4px; border-radius: 4px; border: 1px solid rgba(255,77,77,0.4);" title="Not started">❌</span></div>';
+      }
 
       if (r.received && r.move && d >= r.received && d <= r.move) {
         const dayNum     = dateDiffDays(d, r.received) + 1;
@@ -857,10 +910,12 @@ function renderTable() {
           // Move day but no action
           innerHtml = `<div style="font-size:9px;color:#3fb950;font-family:'Space Mono',monospace;"><span class="move-day-dot"></span>MOVE DAY</div>`;
         }
+        
+        if (taskSymbol) innerHtml += taskSymbol;
 
         html += `<td class="day-cell has-content ${colorClass}${isToday?' today-col':''}">${innerHtml}</td>`;
       } else {
-        html += `<td class="day-cell${isToday?' today-col':''}"></td>`;
+        html += `<td class="day-cell${isToday?' today-col':''}">${taskSymbol}</td>`;
       }
     });
 
@@ -868,6 +923,11 @@ function renderTable() {
   });
 
   body.innerHTML = html;
+}
+
+function saveTaskStatus(id, value) {
+  localStorage.setItem('task_status_' + id, value);
+  renderTable();
 }
 
 function renderPagination(pages) {
