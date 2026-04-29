@@ -136,6 +136,41 @@ select option { background: var(--surface2); }
   font-weight: 600;
 }
 .btn-primary:hover { background: #79c0ff; border-color: #79c0ff; color: #0d1117; }
+
+/* ── Task Report Button ── */
+.btn-report {
+  background: linear-gradient(135deg, rgba(245,166,35,0.15), rgba(255,77,77,0.15));
+  border: 1px solid rgba(245,166,35,0.5);
+  color: #f5a623;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 16px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-family: 'DM Sans', sans-serif;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+.btn-report:hover {
+  background: linear-gradient(135deg, rgba(245,166,35,0.25), rgba(255,77,77,0.25));
+  border-color: #f5a623;
+  box-shadow: 0 0 12px rgba(245,166,35,0.2);
+}
+.btn-report .report-dot {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: #f5a623;
+  box-shadow: 0 0 6px rgba(245,166,35,0.8);
+  animation: pulse-dot 1.8s ease-in-out infinite;
+}
+@keyframes pulse-dot {
+  0%,100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(0.7); }
+}
+
 .result-bar {
   background: var(--surface);
   border-bottom: 1px solid var(--border);
@@ -176,7 +211,12 @@ select option { background: var(--surface2); }
   overflow-x: auto;
   overflow-y: auto;
   max-height: calc(100vh - 200px);
+  min-width: 100%;
 }
+.table-wrap::-webkit-scrollbar { height: 8px; width: 8px; }
+.table-wrap::-webkit-scrollbar-track { background: var(--surface2); }
+.table-wrap::-webkit-scrollbar-thumb { background: var(--surface3); border-radius: 4px; }
+.table-wrap::-webkit-scrollbar-thumb:hover { background: var(--border); }
 table {
   border-collapse: collapse;
   min-width: 100%;
@@ -215,12 +255,24 @@ thead th.date-col.today {
   border-bottom-color: var(--day-border);
 }
 thead th:first-child,
-thead th:nth-child(2) {
+thead th:nth-child(2),
+thead th:nth-child(3),
+thead th:nth-child(4),
+thead th:nth-child(5),
+thead th:nth-child(6),
+thead th:nth-child(7),
+thead th:nth-child(8) {
   position: sticky;
   z-index: 20;
 }
 thead th:first-child { left: 0; }
 thead th:nth-child(2) { left: 110px; }
+thead th:nth-child(3) { left: 220px; }
+thead th:nth-child(4) { left: 350px; }
+thead th:nth-child(5) { left: 480px; }
+thead th:nth-child(6) { left: 580px; }
+thead th:nth-child(7) { left: 680px; }
+thead th:nth-child(8) { left: 780px; }
 tbody tr {
   border-bottom: 1px solid rgba(48,54,61,0.5);
   transition: background 0.1s;
@@ -233,15 +285,35 @@ tbody td {
   vertical-align: middle;
 }
 tbody td:first-child,
-tbody td:nth-child(2) {
+tbody td:nth-child(2),
+tbody td:nth-child(3),
+tbody td:nth-child(4),
+tbody td:nth-child(5),
+tbody td:nth-child(6),
+tbody td:nth-child(7),
+tbody td:nth-child(8) {
   position: sticky;
   background: var(--bg);
   z-index: 5;
 }
 tbody td:first-child { left: 0; }
 tbody td:nth-child(2) { left: 110px; }
+tbody td:nth-child(3) { left: 220px; }
+tbody td:nth-child(4) { left: 350px; }
+tbody td:nth-child(5) { left: 480px; }
+tbody td:nth-child(6) { left: 580px; }
+tbody td:nth-child(7) { left: 680px; }
+tbody td:nth-child(8) { left: 780px; }
 tbody tr:hover td:first-child,
-tbody tr:hover td:nth-child(2) { background: #121920; }
+tbody tr:hover td:nth-child(2),
+tbody tr:hover td:nth-child(3),
+tbody tr:hover td:nth-child(4),
+tbody tr:hover td:nth-child(5),
+tbody tr:hover td:nth-child(6),
+tbody tr:hover td:nth-child(7),
+tbody tr:hover td:nth-child(8) {
+  background: #121920;
+}
 .agent-badge {
   display: inline-block;
   padding: 2px 8px;
@@ -250,18 +322,11 @@ tbody tr:hover td:nth-child(2) { background: #121920; }
   font-weight: 600;
   letter-spacing: 0.3px;
 }
-.lead-id {
+.move-date {
   font-family: 'Space Mono', monospace;
   font-size: 11px;
-  color: var(--accent);
-  font-weight: 700;
+  color: var(--text);
 }
-.received-date, .move-date {
-  font-family: 'Space Mono', monospace;
-  font-size: 11px;
-  color: var(--text-muted);
-}
-.move-date { color: var(--text); }
 .bucket-badge {
   display: inline-block;
   padding: 2px 8px;
@@ -286,8 +351,6 @@ tbody tr:hover td:nth-child(2) { background: #121920; }
 .status-closed { color: var(--closed-text); }
 .status-booked { color: var(--booked-text); font-weight: 600; }
 .status-new { color: #e3b341; }
-
-/* Day cell */
 .day-cell {
   text-align: left;
   min-width: 160px;
@@ -296,12 +359,9 @@ tbody tr:hover td:nth-child(2) { background: #121920; }
   white-space: normal !important;
 }
 .today-col { background: rgba(63,185,80,0.03); }
-
-/* Move day indicator */
 .move-day-dot {
   display: inline-block;
-  width: 6px;
-  height: 6px;
+  width: 6px; height: 6px;
   border-radius: 50%;
   background: #3fb950;
   box-shadow: 0 0 5px rgba(63,185,80,0.6);
@@ -309,15 +369,7 @@ tbody tr:hover td:nth-child(2) { background: #121920; }
   vertical-align: middle;
   flex-shrink: 0;
 }
-
-/* Inline action block — replaces the pill + popup */
-.inline-actions {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-  width: 100%;
-}
-
+.inline-actions { display: flex; flex-direction: column; gap: 3px; width: 100%; }
 .action-line {
   display: flex;
   align-items: flex-start;
@@ -327,13 +379,11 @@ tbody tr:hover td:nth-child(2) { background: #121920; }
   color: var(--text);
   padding: 2px 0;
 }
-
 .action-num {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 16px;
-  height: 16px;
+  min-width: 16px; height: 16px;
   border-radius: 50%;
   font-size: 9px;
   font-family: 'Space Mono', monospace;
@@ -341,39 +391,24 @@ tbody tr:hover td:nth-child(2) { background: #121920; }
   flex-shrink: 0;
   margin-top: 1px;
 }
-
-/* Color variants by action type */
 .action-line.type-call  { color: #79c0ff; }
 .action-line.type-sms   { color: #e3b341; }
 .action-line.type-email { color: #56d364; }
 .action-line.type-multi { color: #c9d1d9; }
-
 .action-num.type-call  { background: rgba(97,175,254,0.2);  color: #79c0ff; }
 .action-num.type-sms   { background: rgba(227,179,65,0.2);  color: #e3b341; }
 .action-num.type-email { background: rgba(86,211,100,0.2);  color: #56d364; }
 .action-num.type-multi { background: rgba(198,120,221,0.2); color: #c678dd; }
-
-/* Thin top border for each cell that has content */
-.day-cell.has-content {
-  border-top: 2px solid transparent;
-}
+.day-cell.has-content { border-top: 2px solid transparent; }
 .day-cell.has-content.bc-b1 { border-top-color: rgba(255,77,77,0.4); background: rgba(255,77,77,0.03); }
 .day-cell.has-content.bc-b2 { border-top-color: rgba(245,166,35,0.4); background: rgba(245,166,35,0.03); }
 .day-cell.has-content.bc-b3 { border-top-color: rgba(249,215,28,0.4); background: rgba(249,215,28,0.03); }
 .day-cell.has-content.bc-b4 { border-top-color: rgba(88,166,255,0.4); background: rgba(88,166,255,0.03); }
 .day-cell.has-content.bc-move { border-top-color: #3fb950; background: rgba(63,185,80,0.05); }
-
-.empty-state {
-  text-align: center;
-  padding: 60px 20px;
-  color: var(--text-muted);
-  font-family: 'Space Mono', monospace;
-}
+.empty-state { text-align: center; padding: 60px 20px; color: var(--text-muted); font-family: 'Space Mono', monospace; }
 .empty-state .big { font-size: 32px; margin-bottom: 8px; }
 .sort-icon { margin-left: 4px; opacity: 0.4; font-size: 10px; }
 .sort-icon.active { opacity: 1; color: var(--accent); }
-
-/* Agent colors */
 .agent-Alexander { background: rgba(136,46,185,0.2); color: #c678dd; }
 .agent-Anthony { background: rgba(97,175,254,0.2); color: #61afef; }
 .agent-Arthur { background: rgba(86,182,194,0.2); color: #56b6c2; }
@@ -386,6 +421,329 @@ tbody tr:hover td:nth-child(2) { background: #121920; }
 .agent-Solomon { background: rgba(255,85,85,0.2); color: #ff5555; }
 .agent-Thomas { background: rgba(255,183,77,0.2); color: #ffb74d; }
 .agent-William { background: rgba(102,217,239,0.2); color: #66d9ef; }
+
+/* ══════════════════════════════════════════
+   TASK REPORT MODAL
+══════════════════════════════════════════ */
+.modal-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.75);
+  backdrop-filter: blur(4px);
+  z-index: 1000;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 32px 16px;
+  overflow-y: auto;
+}
+.modal-overlay.open { display: flex; }
+
+.report-modal {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  width: 100%;
+  max-width: 1100px;
+  min-height: 400px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 24px 80px rgba(0,0,0,0.6);
+  animation: modal-in 0.22s cubic-bezier(0.34,1.56,0.64,1);
+}
+@keyframes modal-in {
+  from { opacity: 0; transform: translateY(-24px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.report-header {
+  padding: 20px 24px 16px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.report-header-left { display: flex; flex-direction: column; gap: 4px; }
+.report-title {
+  font-family: 'Space Mono', monospace;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.report-title-icon {
+  font-size: 16px;
+}
+.report-subtitle {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-family: 'Space Mono', monospace;
+}
+
+.report-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.report-filter-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.report-filter-label {
+  font-size: 10px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.report-date-input {
+  background: var(--surface2) !important;
+  border: 1px solid var(--border) !important;
+  color: var(--text) !important;
+  padding: 5px 8px !important;
+  border-radius: 5px !important;
+  font-size: 11px !important;
+  font-family: 'Space Mono', monospace !important;
+}
+
+.close-modal-btn {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  width: 28px; height: 28px;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  transition: all 0.15s;
+  flex-shrink: 0;
+}
+.close-modal-btn:hover { background: var(--surface3); color: var(--text); border-color: var(--accent); }
+
+/* Summary pills row */
+.report-summary {
+  padding: 12px 24px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border-bottom: 1px solid var(--border);
+  flex-wrap: wrap;
+}
+.summary-chip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 4px 12px;
+  font-family: 'Space Mono', monospace;
+  font-size: 11px;
+}
+.summary-chip .chip-num {
+  font-weight: 700;
+  font-size: 13px;
+}
+.chip-not-started .chip-num { color: #ff4d4d; }
+.chip-partial .chip-num { color: #f5a623; }
+.chip-total .chip-num { color: var(--accent); }
+
+/* Filter tabs */
+.report-tabs {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 10px 24px 0;
+  border-bottom: 1px solid var(--border);
+}
+.report-tab {
+  padding: 6px 16px;
+  font-size: 11px;
+  font-weight: 600;
+  font-family: 'Space Mono', monospace;
+  cursor: pointer;
+  border-radius: 6px 6px 0 0;
+  border: 1px solid transparent;
+  border-bottom: none;
+  color: var(--text-muted);
+  background: transparent;
+  transition: all 0.15s;
+  position: relative;
+  bottom: -1px;
+}
+.report-tab:hover { color: var(--text); background: var(--surface2); }
+.report-tab.active-tab {
+  color: var(--text);
+  background: var(--surface2);
+  border-color: var(--border);
+  border-bottom-color: var(--surface2);
+}
+.report-tab.tab-ns.active-tab { color: #ff4d4d; border-top-color: #ff4d4d; }
+.report-tab.tab-pd.active-tab { color: #f5a623; border-top-color: #f5a623; }
+.report-tab.tab-all.active-tab { color: var(--accent); border-top-color: var(--accent); }
+
+/* Report table */
+.report-body {
+  padding: 0;
+  overflow-x: auto;
+  flex: 1;
+}
+.report-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.report-table thead th {
+  background: var(--surface2);
+  color: var(--text-muted);
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+  position: static;
+  text-align: left;
+  cursor: default;
+}
+.report-table thead th:hover { color: var(--text-muted); }
+.report-table tbody tr {
+  border-bottom: 1px solid rgba(48,54,61,0.5);
+  transition: background 0.1s;
+}
+.report-table tbody tr:hover { background: rgba(88,166,255,0.04); }
+.report-table tbody td {
+  padding: 10px 14px;
+  font-size: 12px;
+  vertical-align: top;
+  white-space: normal;
+  position: static;
+  background: transparent;
+}
+
+/* Status badge in report */
+.rstatus-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 10px;
+  border-radius: 12px;
+  font-size: 10px;
+  font-weight: 700;
+  font-family: 'Space Mono', monospace;
+  white-space: nowrap;
+}
+.rstatus-ns {
+  background: rgba(255,77,77,0.15);
+  color: #ff4d4d;
+  border: 1px solid rgba(255,77,77,0.3);
+}
+.rstatus-pd {
+  background: rgba(245,166,35,0.15);
+  color: #f5a623;
+  border: 1px solid rgba(245,166,35,0.3);
+}
+
+/* Action items in report */
+.report-actions-list {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.report-action-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  font-size: 11px;
+  line-height: 1.4;
+  color: var(--text-muted);
+}
+.report-action-num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 15px; height: 15px;
+  border-radius: 50%;
+  font-size: 8px;
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  flex-shrink: 0;
+  margin-top: 1px;
+  background: rgba(88,166,255,0.15);
+  color: var(--accent);
+}
+
+/* Day badge in report */
+.report-day-badge {
+  display: inline-block;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  background: rgba(88,166,255,0.1);
+  color: var(--accent);
+  white-space: nowrap;
+}
+.report-day-badge.move-day {
+  background: rgba(63,185,80,0.15);
+  color: #3fb950;
+}
+
+.report-footer {
+  padding: 12px 24px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.report-footer-info {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-family: 'Space Mono', monospace;
+}
+
+.btn-csv {
+  background: linear-gradient(135deg, rgba(63,185,80,0.15), rgba(63,185,80,0.08));
+  border: 1px solid rgba(63,185,80,0.4);
+  color: #3fb950;
+  padding: 7px 18px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-family: 'DM Sans', sans-serif;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+.btn-csv:hover {
+  background: linear-gradient(135deg, rgba(63,185,80,0.25), rgba(63,185,80,0.15));
+  border-color: #3fb950;
+  box-shadow: 0 0 10px rgba(63,185,80,0.2);
+}
+
+.report-empty {
+  text-align: center;
+  padding: 48px 20px;
+  color: var(--text-muted);
+  font-family: 'Space Mono', monospace;
+  font-size: 12px;
+}
+.report-empty .big { font-size: 28px; margin-bottom: 10px; }
 </style>
 </head>
 <body>
@@ -434,6 +792,13 @@ tbody tr:hover td:nth-child(2) { background: #121920; }
   <button class="btn btn-primary" onclick="applyFilters()">Apply</button>
   <button class="btn" onclick="resetFilters()">Reset</button>
   <button class="btn" onclick="loadData()">🔄 Refresh Data</button>
+
+  <!-- ★ TASK REPORT BUTTON ★ -->
+  <button class="btn-report" onclick="openTaskReport()" style="margin-left:8px;">
+    <span class="report-dot"></span>
+    📋 Task Report Status
+  </button>
+
   <div style="margin-left:auto" class="control-group">
     <span class="control-label">Per Page</span>
     <select id="perPage">
@@ -455,6 +820,76 @@ tbody tr:hover td:nth-child(2) { background: #121920; }
     <thead id="tableHead"></thead>
     <tbody id="tableBody"></tbody>
   </table>
+</div>
+
+<!-- ══════════════════════════════════════════
+     TASK REPORT MODAL
+══════════════════════════════════════════ -->
+<div class="modal-overlay" id="reportModal" onclick="handleModalClick(event)">
+  <div class="report-modal">
+
+    <div class="report-header">
+      <div class="report-header-left">
+        <div class="report-title">
+          <span class="report-title-icon">📋</span>
+          Task Report Status
+        </div>
+        <div class="report-subtitle" id="reportSubtitle">Showing: Not Started &amp; Partially Done with action items</div>
+      </div>
+      <div class="report-controls">
+        <div class="report-filter-group">
+          <span class="report-filter-label">Date</span>
+          <input type="date" id="reportDate" class="report-date-input" onchange="generateReport()">
+        </div>
+        <div class="report-filter-group">
+          <span class="report-filter-label">Agent</span>
+          <select id="reportAgentFilter" class="report-date-input" onchange="generateReport()" style="font-family:'DM Sans',sans-serif;font-size:11px;">
+            <option value="">All Agents</option>
+          </select>
+        </div>
+        <button class="close-modal-btn" onclick="closeTaskReport()" title="Close">✕</button>
+      </div>
+    </div>
+
+    <div class="report-summary" id="reportSummary">
+      <div class="summary-chip chip-total"><span class="chip-num" id="sumTotal">0</span> Total Issues</div>
+      <div class="summary-chip chip-not-started"><span class="chip-num" id="sumNS">0</span> Not Started</div>
+      <div class="summary-chip chip-partial"><span class="chip-num" id="sumPD">0</span> Partially Done</div>
+    </div>
+
+    <div class="report-tabs">
+      <button class="report-tab tab-all active-tab" onclick="setReportTab('all', this)">All Issues</button>
+      <button class="report-tab tab-ns" onclick="setReportTab('ns', this)">❌ Not Started</button>
+      <button class="report-tab tab-pd" onclick="setReportTab('pd', this)">⏳ Partially Done</button>
+    </div>
+
+    <div class="report-body">
+      <table class="report-table">
+        <thead>
+          <tr>
+            <th style="width:40px">#</th>
+            <th>Agent</th>
+            <th>Lead ID</th>
+            <th>Customer Name</th>
+            <th>Bucket</th>
+            <th>Move Date</th>
+            <th>Day in Timeline</th>
+            <th>Task Status</th>
+            <th>Action Items Required</th>
+          </tr>
+        </thead>
+        <tbody id="reportTableBody"></tbody>
+      </table>
+    </div>
+
+    <div class="report-footer">
+      <div class="report-footer-info" id="reportFooterInfo">–</div>
+      <button class="btn-csv" onclick="downloadCSV()">
+        ⬇ Download CSV
+      </button>
+    </div>
+
+  </div>
 </div>
 
 <script>
@@ -579,7 +1014,7 @@ async function loadData() {
     const text = await response.text();
     RAW = parseCSV(text);
     if (RAW.length === 0) {
-      showError('No active leads found. All rows may be Booked/Closed, or headers may not match.');
+      showError('No active leads found.');
       return;
     }
     buildHead();
@@ -588,7 +1023,6 @@ async function loadData() {
     updateLastRefreshed();
   } catch (err) {
     showError('Error loading data: ' + err.message);
-    console.error('Load error:', err);
   }
 }
 
@@ -640,13 +1074,13 @@ function parseCSV(text) {
 
 function showLoadingState() {
   document.getElementById('tableBody').innerHTML = `
-    <tr><td colspan="20" style="text-align:center;padding:80px;color:var(--text-muted);font-family:'Space Mono',monospace;background:var(--surface2);">
+    <tr><td colspan="20" style="text-align:center;padding:80px;color:var(--text-muted);font-family:'Space Mono',monospace;">
       <div style="font-size:24px;margin-bottom:10px;">⏳</div>Syncing with Sheet...
     </td></tr>`;
 }
 function showError(msg) {
   document.getElementById('tableBody').innerHTML = `
-    <tr><td colspan="20" style="text-align:center;padding:80px;color:#ff4d4d;font-family:'Space Mono',monospace;background:var(--surface2);">
+    <tr><td colspan="20" style="text-align:center;padding:80px;color:#ff4d4d;font-family:'Space Mono',monospace;">
       <div style="font-size:24px;margin-bottom:10px;">⚠️</div>${msg}
     </td></tr>`;
 }
@@ -675,10 +1109,6 @@ function getLocalISODate(date) {
 const todayDateObj = new Date();
 const TODAY = getLocalISODate(todayDateObj);
 
-const tomorrowDateObj = new Date();
-tomorrowDateObj.setDate(tomorrowDateObj.getDate() + 1);
-const TOMORROW = getLocalISODate(tomorrowDateObj);
-
 function generateDateRange(fromDate, toDate) {
   const dates = [];
   let current = new Date(fromDate);
@@ -690,7 +1120,6 @@ function generateDateRange(fromDate, toDate) {
   return dates;
 }
 
-// Initial inputs setup
 setTimeout(() => {
   if (document.getElementById('moveDateFrom') && !document.getElementById('moveDateFrom').value) {
     document.getElementById('moveDateFrom').value = TODAY;
@@ -738,26 +1167,21 @@ function formatMonthDay(d) {
 // ─────────────────────────────────────────────
 // TABLE BUILD
 // ─────────────────────────────────────────────
-function toggleTaskStatusCol() {
-  buildHead();
-  renderTable();
-}
+function toggleTaskStatusCol() { buildHead(); renderTable(); }
 
 function buildHead() {
-  const showTask = document.getElementById('toggleTaskStatus') ? document.getElementById('toggleTaskStatus').checked : true;
+  const showTask = document.getElementById('toggleTaskStatus')?.checked ?? true;
   const head = document.getElementById('tableHead');
   const cols = [
     {key:'agent',    label:'Agent'},
-    {key:'id',       label:'Salesjet ID'},
+    {key:'id',       label:'Lead ID'},
     {key:'custName', label:'Cust Name'},
-    {key:'received', label:'Received Date'},
+    {key:'received', label:'Lead Received Date'},
     {key:'move',     label:'Move Date'},
     {key:'bucket',   label:'Bucket Type'},
-    {key:'status',   label:'Status'},
+    {key:'status',   label:'Lead Status'},
   ];
-  if (showTask) {
-    cols.push({key:'taskStatus', label:'Task Status'});
-  }
+  if (showTask) cols.push({key:'taskStatus', label:'Task Status'});
   let html = '<tr>';
   cols.forEach(c => {
     html += `<th onclick="sortBy('${c.key}')">${c.label}<span class="sort-icon">↕</span></th>`;
@@ -769,7 +1193,6 @@ function buildHead() {
   });
   html += '</tr>';
   head.innerHTML = html;
-
   const from = DATE_COLS[0], to = DATE_COLS[DATE_COLS.length - 1];
   document.getElementById('headerSub').textContent =
     `${formatMonthDay(from)} – ${formatMonthDay(to)}, ${from ? from.slice(0,4) : ''} \u00a0|\u00a0 Move Timeline View`;
@@ -793,7 +1216,6 @@ function applyFilters() {
   else if (!fromDate && toDate) DATE_COLS = generateDateRange(toDate, toDate);
 
   buildHead();
-
   filtered = RAW.filter(r => {
     if (agent  && r.agent  !== agent)  return false;
     if (bucket && r.bucket !== bucket) return false;
@@ -825,15 +1247,21 @@ function updateStats() {
 
 function renderTable() {
   const perPage = parseInt(document.getElementById('perPage').value);
-  const sorted = [...filtered].sort((a, b) => {
-    let av = a[sortKey] || '', bv = b[sortKey] || '';
-    return av < bv ? -sortDir : av > bv ? sortDir : 0;
-  });
-
+  let sorted;
+  if (sortKey === 'received') {
+    sorted = [...filtered].sort((a, b) => {
+      const bucketOrder = { 'Bucket 1': 1, 'Bucket 2': 2, 'Bucket 3': 3, 'Bucket 4': 4 };
+      return (bucketOrder[a.bucket]||999) - (bucketOrder[b.bucket]||999);
+    });
+  } else {
+    sorted = [...filtered].sort((a, b) => {
+      let av = a[sortKey]||'', bv = b[sortKey]||'';
+      return av < bv ? -sortDir : av > bv ? sortDir : 0;
+    });
+  }
   const total = sorted.length;
   const pages = Math.max(1, Math.ceil(total / perPage));
   if (currentPage > pages) currentPage = pages;
-
   const start = (currentPage - 1) * perPage;
   const pageData = sorted.slice(start, start + perPage);
 
@@ -853,51 +1281,48 @@ function renderTable() {
     const bc = getBucketClass(r.bucket);
     const sc = getStatusClass(r.status);
     const agentClass = 'agent-' + (r.agent || 'Unknown');
-
-    const showTask = document.getElementById('toggleTaskStatus') ? document.getElementById('toggleTaskStatus').checked : true;
+    const showTask = document.getElementById('toggleTaskStatus')?.checked ?? true;
     const savedTaskStatus = localStorage.getItem('task_status_' + r.id) || '';
 
     html += `<tr>
       <td><span class="agent-badge ${agentClass}">${r.agent||'–'}</span></td>
-      <td style="font-family:'Space Mono',monospace;font-size:11px;">${r.id||'–'}</td>
+      <td style="font-family:'Space Mono',monospace;font-size:11px;color:var(--accent)">${r.id||'–'}</td>
       <td style="font-size:12px;">${r.custName||'–'}</td>
-      <td>${r.received ? formatDateShort(r.received) : '–'}</td>
+      <td style="font-family:'Space Mono',monospace;font-size:11px;color:var(--text-muted)">${r.received ? formatDateShort(r.received) : '–'}</td>
       <td><span class="move-date">${formatDateShort(r.move)}</span></td>
       <td>${r.bucket ? `<span class="bucket-badge ${bc}">${r.bucket}</span>` : '–'}</td>
       <td><span class="status-text ${sc}" title="${r.status}">${r.status || '–'}</span></td>`;
 
     if (showTask) {
       html += `<td>
-        <select class="task-status-select" onchange="saveTaskStatus('${r.id}', this.value)" style="width: 110px; padding: 4px; font-size: 11px;">
+        <select class="task-status-select" onchange="saveTaskStatus('${r.id}', this.value)" style="width:110px;padding:4px;font-size:11px;">
           <option value="">Select...</option>
-          <option value="Completed" ${savedTaskStatus === 'Completed' ? 'selected' : ''}>Completed</option>
-          <option value="Partially done" ${savedTaskStatus === 'Partially done' ? 'selected' : ''}>Partially done</option>
-          <option value="Not started" ${savedTaskStatus === 'Not started' ? 'selected' : ''}>Not started</option>
+          <option value="Completed" ${savedTaskStatus==='Completed'?'selected':''}>Completed</option>
+          <option value="Partially done" ${savedTaskStatus==='Partially done'?'selected':''}>Partially done</option>
+          <option value="Not started" ${savedTaskStatus==='Not started'?'selected':''}>Not started</option>
         </select>
       </td>`;
     }
 
     DATE_COLS.forEach(d => {
       const isToday = d === TODAY;
-
+      const savedTS = localStorage.getItem('task_status_' + r.id) || '';
       let taskSymbol = '';
       if (isToday) {
-         if (savedTaskStatus === 'Completed') taskSymbol = '<div style="margin-top: 4px; display: inline-block;"><span style="font-size: 14px; background: rgba(63,185,80,0.2); padding: 2px 4px; border-radius: 4px; border: 1px solid rgba(63,185,80,0.4);" title="Completed">✅</span></div>';
-         else if (savedTaskStatus === 'Partially done') taskSymbol = '<div style="margin-top: 4px; display: inline-block;"><span style="font-size: 14px; background: rgba(245,166,35,0.2); padding: 2px 4px; border-radius: 4px; border: 1px solid rgba(245,166,35,0.4);" title="Partially done">⏳</span></div>';
-         else if (savedTaskStatus === 'Not started') taskSymbol = '<div style="margin-top: 4px; display: inline-block;"><span style="font-size: 14px; background: rgba(255,77,77,0.2); padding: 2px 4px; border-radius: 4px; border: 1px solid rgba(255,77,77,0.4);" title="Not started">❌</span></div>';
+        if (savedTS === 'Completed') taskSymbol = '<div style="margin-top:4px;display:inline-block;"><span style="font-size:14px;background:rgba(63,185,80,0.2);padding:2px 4px;border-radius:4px;border:1px solid rgba(63,185,80,0.4);" title="Completed">✅</span></div>';
+        else if (savedTS === 'Partially done') taskSymbol = '<div style="margin-top:4px;display:inline-block;"><span style="font-size:14px;background:rgba(245,166,35,0.2);padding:2px 4px;border-radius:4px;border:1px solid rgba(245,166,35,0.4);" title="Partially done">⏳</span></div>';
+        else if (savedTS === 'Not started') taskSymbol = '<div style="margin-top:4px;display:inline-block;"><span style="font-size:14px;background:rgba(255,77,77,0.2);padding:2px 4px;border-radius:4px;border:1px solid rgba(255,77,77,0.4);" title="Not started">❌</span></div>';
       }
 
       if (r.received && r.move && d >= r.received && d <= r.move) {
         const dayNum     = dateDiffDays(d, r.received) + 1;
         const daysToMove = dateDiffDays(r.move, d);
         const isMoveDay  = d === r.move;
-
         const action = getStrategyAction(r.bucket, dayNum, daysToMove);
         const colorClass = isMoveDay ? 'bc-move' : `bc-${bc}`;
 
         let innerHtml = '';
         if (action && action.steps && action.steps.length > 0) {
-          // If move day, show small indicator dot
           const moveDot = isMoveDay ? '<span class="move-day-dot" title="Move Day"></span>' : '';
           const stepsHtml = action.steps.map((s, i) =>
             `<div class="action-line type-${action.type}">
@@ -907,21 +1332,16 @@ function renderTable() {
           ).join('');
           innerHtml = `<div class="inline-actions">${moveDot ? `<div style="margin-bottom:3px">${moveDot}<span style="font-size:9px;color:#3fb950;font-family:'Space Mono',monospace">MOVE DAY</span></div>` : ''}${stepsHtml}</div>`;
         } else if (isMoveDay) {
-          // Move day but no action
           innerHtml = `<div style="font-size:9px;color:#3fb950;font-family:'Space Mono',monospace;"><span class="move-day-dot"></span>MOVE DAY</div>`;
         }
-        
         if (taskSymbol) innerHtml += taskSymbol;
-
         html += `<td class="day-cell has-content ${colorClass}${isToday?' today-col':''}">${innerHtml}</td>`;
       } else {
         html += `<td class="day-cell${isToday?' today-col':''}">${taskSymbol}</td>`;
       }
     });
-
     html += '</tr>';
   });
-
   body.innerHTML = html;
 }
 
@@ -933,10 +1353,8 @@ function saveTaskStatus(id, value) {
 function renderPagination(pages) {
   const pg = document.getElementById('pagination');
   if (pages <= 1) { pg.innerHTML = ''; return; }
-
   let html = `<button class="page-btn" onclick="goPage(${currentPage-1})" ${currentPage<=1?'disabled':''}>‹</button>`;
-  let start = Math.max(1, currentPage-2);
-  let end   = Math.min(pages, start+4);
+  let start = Math.max(1, currentPage-2), end = Math.min(pages, start+4);
   if (end - start < 4) start = Math.max(1, end-4);
   if (start > 1) { html += `<button class="page-btn" onclick="goPage(1)">1</button>`; if (start>2) html += `<span style="color:var(--text-muted);font-size:11px">…</span>`; }
   for (let i = start; i <= end; i++) html += `<button class="page-btn${i===currentPage?' active':''}" onclick="goPage(${i})">${i}</button>`;
@@ -958,10 +1376,14 @@ function initAgents() {
   const agents = [...new Set(RAW.map(r => r.agent).filter(Boolean))].sort();
   const sel = document.getElementById('agentFilter');
   sel.innerHTML = '<option value="">All Agents</option>';
+  const rsel = document.getElementById('reportAgentFilter');
+  rsel.innerHTML = '<option value="">All Agents</option>';
   agents.forEach(a => {
-    const opt = document.createElement('option');
-    opt.value = a; opt.textContent = a;
-    sel.appendChild(opt);
+    [sel, rsel].forEach(s => {
+      const opt = document.createElement('option');
+      opt.value = a; opt.textContent = a;
+      s.appendChild(opt);
+    });
   });
 }
 
@@ -969,7 +1391,205 @@ document.getElementById('perPage').addEventListener('change', () => { currentPag
 document.addEventListener('keydown', e => {
   if (e.key === 'ArrowRight') goPage(currentPage+1);
   if (e.key === 'ArrowLeft')  goPage(currentPage-1);
+  if (e.key === 'Escape') closeTaskReport();
 });
+
+// ══════════════════════════════════════════
+// TASK REPORT MODAL LOGIC
+// ══════════════════════════════════════════
+let reportData = [];         // current report rows (all)
+let reportFilteredData = []; // after tab filter
+let activeReportTab = 'all';
+
+function openTaskReport() {
+  // Pre-fill date to today
+  document.getElementById('reportDate').value = TODAY;
+  document.getElementById('reportModal').classList.add('open');
+  generateReport();
+}
+
+function closeTaskReport() {
+  document.getElementById('reportModal').classList.remove('open');
+}
+
+function handleModalClick(e) {
+  if (e.target === document.getElementById('reportModal')) closeTaskReport();
+}
+
+function setReportTab(tab, el) {
+  activeReportTab = tab;
+  document.querySelectorAll('.report-tab').forEach(t => t.classList.remove('active-tab'));
+  el.classList.add('active-tab');
+  renderReportTable();
+}
+
+/**
+ * Core logic: for each lead in RAW, check if the chosen date falls
+ * within that lead's received→move window AND has action items.
+ * Then look at the stored task status.
+ * Only include rows where status is "Not started" OR "Partially done".
+ */
+function generateReport() {
+  const chosenDate = document.getElementById('reportDate').value;
+  const agentFilter = document.getElementById('reportAgentFilter').value;
+  if (!chosenDate) return;
+
+  reportData = [];
+
+  RAW.forEach(r => {
+    if (agentFilter && r.agent !== agentFilter) return;
+    if (!r.received || !r.move) return;
+    if (chosenDate < r.received || chosenDate > r.move) return;
+
+    const dayNum     = dateDiffDays(chosenDate, r.received) + 1;
+    const daysToMove = dateDiffDays(r.move, chosenDate);
+    const isMoveDay  = chosenDate === r.move;
+    const action     = getStrategyAction(r.bucket, dayNum, daysToMove);
+
+    // Only include if there are action items
+    if (!action || !action.steps || action.steps.length === 0) return;
+
+    const taskStatus = localStorage.getItem('task_status_' + r.id) || '';
+
+    // Only include "Not started" or "Partially done"
+    if (taskStatus !== 'Not started' && taskStatus !== 'Partially done') return;
+
+    reportData.push({
+      agent: r.agent,
+      id: r.id,
+      custName: r.custName,
+      bucket: r.bucket,
+      move: r.move,
+      dayNum,
+      daysToMove,
+      isMoveDay,
+      taskStatus,
+      actionSteps: action.steps,
+      actionType: action.type,
+    });
+  });
+
+  // Update summary counts
+  const nsCount = reportData.filter(r => r.taskStatus === 'Not started').length;
+  const pdCount = reportData.filter(r => r.taskStatus === 'Partially done').length;
+  document.getElementById('sumTotal').textContent = reportData.length;
+  document.getElementById('sumNS').textContent = nsCount;
+  document.getElementById('sumPD').textContent = pdCount;
+
+  const dateLabel = formatMonthDay(chosenDate) + ', ' + chosenDate.slice(0,4);
+  document.getElementById('reportSubtitle').textContent =
+    `Date: ${dateLabel} — Showing leads with pending action items`;
+
+  renderReportTable();
+}
+
+function renderReportTable() {
+  // Tab filter
+  if (activeReportTab === 'ns') {
+    reportFilteredData = reportData.filter(r => r.taskStatus === 'Not started');
+  } else if (activeReportTab === 'pd') {
+    reportFilteredData = reportData.filter(r => r.taskStatus === 'Partially done');
+  } else {
+    reportFilteredData = [...reportData];
+  }
+
+  // Sort: Not started first, then Partially done; within each group sort by bucket
+  const bucketOrder = {'Bucket 1':1,'Bucket 2':2,'Bucket 3':3,'Bucket 4':4};
+  const statusOrder = {'Not started':1,'Partially done':2};
+  reportFilteredData.sort((a, b) => {
+    const so = (statusOrder[a.taskStatus]||9) - (statusOrder[b.taskStatus]||9);
+    if (so !== 0) return so;
+    return (bucketOrder[a.bucket]||9) - (bucketOrder[b.bucket]||9);
+  });
+
+  const tbody = document.getElementById('reportTableBody');
+
+  if (reportFilteredData.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="9" class="report-empty">
+      <div class="big">🎉</div>
+      <div>No pending items found for this date!</div>
+      <div style="margin-top:6px;font-size:10px;opacity:0.6">All leads are either Completed or have no action items.</div>
+    </td></tr>`;
+    document.getElementById('reportFooterInfo').textContent = '0 records';
+    return;
+  }
+
+  let html = '';
+  reportFilteredData.forEach((r, idx) => {
+    const bc = getBucketClass(r.bucket);
+    const agentClass = 'agent-' + (r.agent || 'Unknown');
+    const isNS = r.taskStatus === 'Not started';
+    const statusBadge = isNS
+      ? `<span class="rstatus-badge rstatus-ns">❌ Not Started</span>`
+      : `<span class="rstatus-badge rstatus-pd">⏳ Partially Done</span>`;
+
+    const dayBadge = r.isMoveDay
+      ? `<span class="report-day-badge move-day">🚛 Move Day (Day ${r.dayNum})</span>`
+      : `<span class="report-day-badge">Day ${r.dayNum} &nbsp;·&nbsp; ${r.daysToMove}d to move</span>`;
+
+    const actionsHtml = r.actionSteps.map((s, i) =>
+      `<div class="report-action-item">
+        <span class="report-action-num">${i+1}</span>
+        <span>${s}</span>
+      </div>`
+    ).join('');
+
+    html += `<tr>
+      <td style="color:var(--text-muted);font-family:'Space Mono',monospace;font-size:11px;text-align:center">${idx+1}</td>
+      <td><span class="agent-badge ${agentClass}">${r.agent||'–'}</span></td>
+      <td style="font-family:'Space Mono',monospace;font-size:11px;color:var(--accent)">${r.id||'–'}</td>
+      <td style="font-size:12px;">${r.custName||'–'}</td>
+      <td>${r.bucket ? `<span class="bucket-badge ${bc}">${r.bucket}</span>` : '–'}</td>
+      <td style="font-family:'Space Mono',monospace;font-size:11px;">${formatDateShort(r.move)}</td>
+      <td>${dayBadge}</td>
+      <td>${statusBadge}</td>
+      <td><div class="report-actions-list">${actionsHtml}</div></td>
+    </tr>`;
+  });
+
+  tbody.innerHTML = html;
+
+  const chosenDate = document.getElementById('reportDate').value;
+  document.getElementById('reportFooterInfo').textContent =
+    `${reportFilteredData.length} record${reportFilteredData.length!==1?'s':''} · ${formatMonthDay(chosenDate)}, ${chosenDate.slice(0,4)}`;
+}
+
+// ── CSV Export ──
+function downloadCSV() {
+  if (reportFilteredData.length === 0) {
+    alert('No data to export.');
+    return;
+  }
+  const chosenDate = document.getElementById('reportDate').value;
+  const headers = ['#','Agent','Lead ID','Customer Name','Bucket','Move Date','Day in Timeline','Days to Move','Is Move Day','Task Status','Action Items'];
+  const rows = reportFilteredData.map((r, idx) => [
+    idx + 1,
+    r.agent || '',
+    r.id || '',
+    r.custName || '',
+    r.bucket || '',
+    r.move || '',
+    `Day ${r.dayNum}`,
+    r.daysToMove,
+    r.isMoveDay ? 'Yes' : 'No',
+    r.taskStatus,
+    r.actionSteps.join(' | ')
+  ]);
+
+  const csvContent = [headers, ...rows]
+    .map(row => row.map(cell => `"${String(cell).replace(/"/g,'""')}"`).join(','))
+    .join('\n');
+
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `task-report-${chosenDate}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
 
 loadData();
 setInterval(loadData, 300000);
