@@ -799,6 +799,11 @@ tbody tr:hover td:nth-child(8) {
     📋 Task Report Status
   </button>
 
+  <!-- ★ EMAIL REPORT BUTTON ★ -->
+  <button class="btn-report" onclick="openEmailModal()" style="margin-left:8px; background: linear-gradient(135deg, rgba(88,166,255,0.15), rgba(63,185,80,0.15)); border: 1px solid rgba(88,166,255,0.5); color: #58a6ff;">
+    📧 Send Email Report
+  </button>
+
   <div style="margin-left:auto" class="control-group">
     <span class="control-label">Per Page</span>
     <select id="perPage">
@@ -887,6 +892,63 @@ tbody tr:hover td:nth-child(8) {
       <button class="btn-csv" onclick="downloadCSV()">
         ⬇ Download CSV
       </button>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     EMAIL MODAL
+══════════════════════════════════════════ -->
+<div class="modal-overlay" id="emailModal" onclick="if(event.target===this) closeEmailModal()">
+  <div class="report-modal" style="max-width: 500px;">
+    
+    <div class="report-header">
+      <div class="report-header-left">
+        <div class="report-title">
+          <span class="report-title-icon">📧</span>
+          Send Email Report
+        </div>
+        <div class="report-subtitle">Send task report status via email</div>
+      </div>
+      <button class="close-modal-btn" onclick="closeEmailModal()" title="Close">✕</button>
+    </div>
+
+    <div style="padding: 20px;">
+      <div style="margin-bottom: 20px;">
+        <label style="display: block; margin-bottom: 8px; font-size: 12px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600;">Recipient Email</label>
+        <input type="email" id="recipientEmail" placeholder="Enter email address" value="saravanaraja@tnvl.ca" style="width: 100%; background: var(--surface2); border: 1px solid var(--border); color: var(--text); padding: 8px 12px; border-radius: 6px; font-size: 12px; font-family: 'DM Sans', sans-serif; outline: none;">
+      </div>
+
+      <div style="margin-bottom: 20px;">
+        <label style="display: block; margin-bottom: 8px; font-size: 12px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600;">Subject</label>
+        <input type="text" id="emailSubject" placeholder="Task Report Status" value="Task Report Status" style="width: 100%; background: var(--surface2); border: 1px solid var(--border); color: var(--text); padding: 8px 12px; border-radius: 6px; font-size: 12px; font-family: 'DM Sans', sans-serif; outline: none;">
+      </div>
+
+      <div style="margin-bottom: 20px;">
+        <label style="display: block; margin-bottom: 8px; font-size: 12px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600;">Include Data</label>
+        <div style="display: flex; flex-direction: column; gap: 8px;">
+          <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+            <input type="checkbox" id="includeSummary" checked style="margin: 0;">
+            <span style="font-size: 12px;">Summary Statistics</span>
+          </label>
+          <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+            <input type="checkbox" id="includeRecentLeads" checked style="margin: 0;">
+            <span style="font-size: 12px;">Recent Leads (Top 10)</span>
+          </label>
+          <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+            <input type="checkbox" id="includeTaskReport" checked style="margin: 0;">
+            <span style="font-size: 12px;">Current Task Report Data</span>
+          </label>
+        </div>
+      </div>
+
+      <div style="display: flex; gap: 10px; justify-content: flex-end;">
+        <button class="btn" onclick="closeEmailModal()">Cancel</button>
+        <button class="btn btn-primary" onclick="sendEmailReport()">
+          📧 Send Email
+        </button>
+      </div>
     </div>
 
   </div>
@@ -1448,6 +1510,14 @@ function openTaskReport() {
   generateReport();
 }
 
+function openEmailModal() {
+  document.getElementById('emailModal').classList.add('open');
+}
+
+function closeEmailModal() {
+  document.getElementById('emailModal').classList.remove('open');
+}
+
 function closeTaskReport() {
   document.getElementById('reportModal').classList.remove('open');
 }
@@ -1592,6 +1662,78 @@ function renderReportTable() {
   const chosenDate = document.getElementById('reportDate').value;
   document.getElementById('reportFooterInfo').textContent =
     `${reportFilteredData.length} record${reportFilteredData.length!==1?'s':''} · ${formatMonthDay(chosenDate)}, ${chosenDate.slice(0,4)}`;
+}
+
+// ── Email Sending ──
+async function sendEmailReport() {
+  const recipientEmail = document.getElementById('recipientEmail').value.trim();
+  const subject = document.getElementById('emailSubject').value.trim();
+  
+  if (!recipientEmail) {
+    alert('Please enter a recipient email address.');
+    return;
+  }
+  
+  const includeSummary = document.getElementById('includeSummary').checked;
+  const includeRecentLeads = document.getElementById('includeRecentLeads').checked;
+  const includeTaskReport = document.getElementById('includeTaskReport').checked;
+  
+  const reportData = {
+    totalLeads: RAW.length,
+    statusCounts: {
+      open: RAW.filter(r => r.status === 'Open').length,
+      closed: RAW.filter(r => r.status === 'Closed').length,
+      booked: RAW.filter(r => r.status === 'Booked').length
+    },
+    recentLeads: includeRecentLeads ? RAW.slice(0, 10).map(r => ({
+      name: r.custName || r.id || 'N/A',
+      status: r.status || 'N/A',
+      date: r.received || 'N/A',
+      source: r.source || 'N/A'
+    })) : [],
+    taskReportData: includeTaskReport ? {
+      date: document.getElementById('reportDate').value,
+      totalIssues: reportFilteredData.length,
+      notStarted: reportFilteredData.filter(r => r.taskStatus === 'Not started').length,
+      partiallyDone: reportFilteredData.filter(r => r.taskStatus === 'Partially done').length,
+      issues: reportFilteredData.slice(0, 20).map(r => ({
+        agent: r.agent || '',
+        leadId: r.id || '',
+        customerName: r.custName || '',
+        bucket: r.bucket || '',
+        moveDate: r.move || '',
+        dayInTimeline: `Day ${r.dayNum}`,
+        taskStatus: r.taskStatus || '',
+        actionItems: r.actionSteps.join(' | ') || ''
+      }))
+    } : null
+  };
+  
+  try {
+    const response = await fetch('/api/send-email', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        toEmail: recipientEmail,
+        subject: subject,
+        reportData: reportData
+      })
+    });
+    
+    const result = await response.json();
+    
+    if (result.success) {
+      alert('Email sent successfully!');
+      closeEmailModal();
+    } else {
+      alert('Failed to send email: ' + result.message);
+    }
+  } catch (error) {
+    console.error('Error sending email:', error);
+    alert('Failed to send email. Please check your email configuration and try again.');
+  }
 }
 
 // ── CSV Export ──
