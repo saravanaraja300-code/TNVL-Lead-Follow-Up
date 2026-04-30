@@ -3,13 +3,12 @@ const http = require('http');
 const fs = require('fs');
 const path = require('path');
 const https = require('https');
-const nodemailer = require('nodemailer');
 
 const PORT = process.env.PORT || 3030;
 const SHEET_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSXsdx0UFbCKXSCYwGzxEC5iRO-L31puQ_Ta3xBGRIwyxCW7-PGSmsRfX9bJ3yFdY6DB7RzN98WvcRe/pub?output=csv';
 
 // ═══════════════════════════════════════════════════════════════
-//  EMAIL HANDLER
+//  EMAIL HANDLER — Uses Resend API (HTTPS port 443, never blocked)
 // ═══════════════════════════════════════════════════════════════
 async function handleEmailRequest(req, res) {
   let body = '';
@@ -26,114 +25,124 @@ async function handleEmailRequest(req, res) {
         totalLeads: reportData?.totalLeads || 0
       });
 
-      if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
-        console.error('❌ Email failed: Missing EMAIL_USER or EMAIL_PASS in .env');
+      if (!process.env.RESEND_API_KEY) {
+        console.error('❌ Email failed: Missing RESEND_API_KEY in environment variables');
         res.writeHead(500, { 'Content-Type': 'application/json' });
         return res.end(JSON.stringify({
           success: false,
-          message: 'Email credentials missing in server .env'
+          message: 'RESEND_API_KEY missing. Please add it in Render environment variables.'
         }));
       }
 
-      const transporter = nodemailer.createTransport({
-        host: 'smtppro.zoho.com',
-        port: 465,
-        secure: true,
-        authMethod: 'LOGIN',
-        auth: {
-          type: 'login',
-          user: process.env.EMAIL_USER,
-          pass: process.env.EMAIL_PASS
-        },
-        connectionTimeout: 30000,
-        greetingTimeout: 15000,
-        socketTimeout: 45000
-      });
-
       const htmlContent = generateEmailHTML(reportData);
 
-      const mailOptions = {
-        from: `"Lead Tracker Dashboard" <${process.env.EMAIL_USER}>`,
-        to: toEmail,
+      // Build recipients array — supports comma-separated emails
+      const recipients = toEmail
+        .split(',')
+        .map(e => e.trim())
+        .filter(Boolean);
+
+      const emailPayload = JSON.stringify({
+        from: 'Lead Tracker <onboarding@resend.dev>',
+        to: recipients,
         subject: subject || 'Task Report Status',
         html: htmlContent
-      };
+      });
 
-      console.log(`📨 Sending Lead Tracker report to: ${toEmail}...`);
+      console.log(`📨 Sending Lead Tracker report via Resend to: ${recipients.join(', ')}...`);
       const startTime = Date.now();
-      const info = await transporter.sendMail(mailOptions);
-      const duration = Date.now() - startTime;
-      console.log(`✅ Email sent successfully in ${duration}ms:`, info.messageId);
 
+      // Call Resend API over HTTPS (port 443 — never blocked by any host)
+      const result = await callResendAPI(emailPayload);
+      const duration = Date.now() - startTime;
+
+      console.log(`✅ Email sent successfully via Resend in ${duration}ms:`, result.id);
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({
         success: true,
         message: 'Email sent successfully!',
-        messageId: info.messageId,
+        messageId: result.id,
         duration
       }));
 
     } catch (error) {
-      console.error('❌ Email Error Details:', {
-        code: error.code,
-        message: error.message,
-        errno: error.errno,
-        syscall: error.syscall,
-        address: error.address,
-        port: error.port
-      });
-
-      let userMessage = 'Failed to send Lead Tracker report';
-      if (error.code === 'EAUTH') {
-        userMessage = 'Authentication failed. Use a Zoho App Password from accounts.zoho.com → Security → App Passwords.';
-      } else if (error.code === 'ECONNREFUSED') {
-        userMessage = 'Connection refused. Port 465 may be blocked by your firewall.';
-      } else if (error.code === 'ETIMEDOUT' || error.message?.includes('timeout')) {
-        userMessage = 'Connection timed out. Firewall may be blocking port 465.';
-      } else if (error.code === 'ENOTFOUND') {
-        userMessage = 'DNS resolution failed. Cannot reach smtppro.zoho.com.';
-      } else if (error.code === 'EHOSTUNREACH') {
-        userMessage = 'Host unreachable. Check network connectivity on the server.';
-      }
-
+      console.error('❌ Email Error:', error.message);
       res.writeHead(500, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({
         success: false,
-        message: userMessage,
-        details: error.message,
-        code: error.code
+        message: error.message || 'Failed to send email',
+        details: error.message
       }));
     }
   });
 }
 
 // ═══════════════════════════════════════════════════════════════
-//  EMAIL HTML GENERATOR — Only Task Report Table (9 columns)
+//  RESEND API CALLER
+// ═══════════════════════════════════════════════════════════════
+function callResendAPI(emailPayload) {
+  return new Promise((resolve, reject) => {
+    const options = {
+      hostname: 'api.resend.com',
+      path: '/emails',
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${process.env.RESEND_API_KEY}`,
+        'Content-Type': 'application/json',
+        'Content-Length': Buffer.byteLength(emailPayload)
+      }
+    };
+
+    const apiReq = https.request(options, (apiRes) => {
+      let data = '';
+      apiRes.on('data', chunk => { data += chunk; });
+      apiRes.on('end', () => {
+        try {
+          const result = JSON.parse(data);
+          if (apiRes.statusCode === 200 || apiRes.statusCode === 201) {
+            resolve(result);
+          } else {
+            reject(new Error(result.message || result.error?.message || `Resend API error: ${apiRes.statusCode}`));
+          }
+        } catch (e) {
+          reject(new Error('Failed to parse Resend API response'));
+        }
+      });
+    });
+
+    apiReq.on('error', (err) => {
+      reject(new Error(`Network error: ${err.message}`));
+    });
+
+    apiReq.write(emailPayload);
+    apiReq.end();
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  EMAIL HTML GENERATOR — Task Report Table (9 columns)
 // ═══════════════════════════════════════════════════════════════
 function generateEmailHTML(reportData) {
   const taskReport = reportData?.taskReportData || null;
 
-  // ── Build task rows: exactly the 9 columns shown in the modal ──
   const taskRowsHTML = taskReport && taskReport.issues && taskReport.issues.length > 0
     ? taskReport.issues.map((issue, i) => {
         const isNS = issue.taskStatus === 'Not started';
-        const statusColor = isNS ? '#cc0000' : '#cc6600';
-        const statusBg    = isNS ? '#ffe5e5'  : '#fff3e0';
-        const statusBorder= isNS ? '#f7c5c5'  : '#f7dfc5';
-        const statusLabel = isNS ? '❌ Not Started' : '⏳ Partially Done';
+        const statusColor  = isNS ? '#cc0000' : '#cc6600';
+        const statusBg     = isNS ? '#ffe5e5' : '#fff3e0';
+        const statusBorder = isNS ? '#f7c5c5' : '#f7dfc5';
+        const statusLabel  = isNS ? '❌ Not Started' : '⏳ Partially Done';
 
-        // Bucket color
         let bucketBg = '#e3f2fd', bucketColor = '#0d47a1';
-        if (issue.bucket === 'Bucket 1') { bucketBg = '#ffe5e5'; bucketColor = '#cc0000'; }
+        if (issue.bucket === 'Bucket 1')      { bucketBg = '#ffe5e5'; bucketColor = '#cc0000'; }
         else if (issue.bucket === 'Bucket 2') { bucketBg = '#fff3e0'; bucketColor = '#cc6600'; }
         else if (issue.bucket === 'Bucket 3') { bucketBg = '#fffde7'; bucketColor = '#9a7d00'; }
         else if (issue.bucket === 'Bucket 4') { bucketBg = '#e3f2fd'; bucketColor = '#0d47a1'; }
 
-        // Action items — split by " | " and render as numbered list
         const actions = (issue.actionItems || '').split(' | ').filter(Boolean);
         const actionsHtml = actions.map((a, idx) =>
           `<div style="display:flex;align-items:flex-start;gap:6px;margin-bottom:4px;">
-            <span style="display:inline-flex;align-items:center;justify-content:center;min-width:16px;height:16px;border-radius:50%;background:#e3f2fd;color:#0d47a1;font-size:9px;font-weight:bold;flex-shrink:0;margin-top:1px;">${idx+1}</span>
+            <span style="display:inline-flex;align-items:center;justify-content:center;min-width:16px;height:16px;border-radius:50%;background:#e3f2fd;color:#0d47a1;font-size:9px;font-weight:bold;flex-shrink:0;margin-top:1px;">${idx + 1}</span>
             <span style="font-size:11px;color:#444;line-height:1.4;">${a}</span>
           </div>`
         ).join('');
@@ -163,8 +172,8 @@ function generateEmailHTML(reportData) {
 
   const reportDate = taskReport?.date || '';
   const formattedDate = reportDate
-    ? new Date(reportDate + 'T00:00:00').toLocaleDateString('en-CA', { weekday:'long', year:'numeric', month:'long', day:'numeric' })
-    : new Date().toLocaleDateString('en-CA', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+    ? new Date(reportDate + 'T00:00:00').toLocaleDateString('en-CA', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
+    : new Date().toLocaleDateString('en-CA', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
 
   return `<!DOCTYPE html>
 <html>
@@ -175,7 +184,6 @@ function generateEmailHTML(reportData) {
 </head>
 <body style="margin:0;padding:0;background:#f0f2f5;font-family:Arial,sans-serif;">
 
-  <!-- HEADER -->
   <div style="background:linear-gradient(135deg,#0d1117,#1a2332);padding:28px 40px;text-align:center;">
     <h1 style="margin:0;color:#58a6ff;font-size:24px;letter-spacing:-0.5px;">📋 Task Report Status</h1>
     <p style="margin:8px 0 0;color:#8b949e;font-size:13px;">${formattedDate}</p>
@@ -183,7 +191,6 @@ function generateEmailHTML(reportData) {
 
   <div style="max-width:1000px;margin:0 auto;padding:24px 16px;">
 
-    <!-- SUMMARY PILLS -->
     ${taskReport ? `
     <div style="display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap;justify-content:center;">
       <div style="background:#ffffff;border:1px solid #ddd;border-radius:20px;padding:8px 20px;font-size:13px;box-shadow:0 1px 4px rgba(0,0,0,0.06);">
@@ -200,7 +207,6 @@ function generateEmailHTML(reportData) {
       </div>
     </div>` : ''}
 
-    <!-- TASK REPORT TABLE -->
     <div style="background:#ffffff;border-radius:10px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.08);margin-bottom:24px;">
       <div style="background:#0d1117;padding:14px 20px;display:flex;align-items:center;gap:10px;">
         <span style="font-size:14px;">📋</span>
@@ -227,7 +233,6 @@ function generateEmailHTML(reportData) {
       </div>
     </div>
 
-    <!-- FOOTER -->
     <div style="text-align:center;padding:16px;color:#aaa;font-size:11px;">
       <p style="margin:0;">Generated automatically by Lead Tracker Dashboard</p>
       <p style="margin:4px 0 0;">© ${new Date().getFullYear()} TNVL — All rights reserved</p>
@@ -311,9 +316,9 @@ function fetchWithRedirects(url, res, redirectCount = 0) {
 server.listen(PORT, () => {
   console.log('');
   console.log('✅ Lead Tracker Server running!');
-  console.log(`   Open in browser : http://localhost:${PORT}`);
-  console.log(`   Email user       : ${process.env.EMAIL_USER || '⚠️  Not set'}`);
-  console.log(`   Email pass       : ${process.env.EMAIL_PASS ? '✅ Set' : '⚠️  Not set'}`);
+  console.log(`   Open in browser  : http://localhost:${PORT}`);
+  console.log(`   Email via         : Resend API (HTTPS — no SMTP port issues)`);
+  console.log(`   Resend API Key    : ${process.env.RESEND_API_KEY ? '✅ Set' : '⚠️  Not set — add RESEND_API_KEY in Render env vars'}`);
   console.log('');
   console.log('   Press Ctrl+C to stop.');
   console.log('');
