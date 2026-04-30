@@ -137,7 +137,6 @@ select option { background: var(--surface2); }
 }
 .btn-primary:hover { background: #79c0ff; border-color: #79c0ff; color: #0d1117; }
 
-/* ── Task Report Button ── */
 .btn-report {
   background: linear-gradient(135deg, rgba(245,166,35,0.15), rgba(255,77,77,0.15));
   border: 1px solid rgba(245,166,35,0.5);
@@ -422,6 +421,27 @@ tbody tr:hover td:nth-child(8) {
 .agent-Thomas { background: rgba(255,183,77,0.2); color: #ffb74d; }
 .agent-William { background: rgba(102,217,239,0.2); color: #66d9ef; }
 
+/* ── Shift date indicator ── */
+.shift-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-left: 10px;
+  padding: 2px 8px;
+  border-radius: 10px;
+  background: rgba(63,185,80,0.1);
+  border: 1px solid rgba(63,185,80,0.3);
+  font-size: 10px;
+  color: #3fb950;
+  font-family: 'Space Mono', monospace;
+}
+.shift-dot {
+  width: 5px; height: 5px;
+  border-radius: 50%;
+  background: #3fb950;
+  animation: pulse-dot 2s ease-in-out infinite;
+}
+
 /* ══════════════════════════════════════════
    TASK REPORT MODAL
 ══════════════════════════════════════════ */
@@ -475,9 +495,7 @@ tbody tr:hover td:nth-child(8) {
   align-items: center;
   gap: 8px;
 }
-.report-title-icon {
-  font-size: 16px;
-}
+.report-title-icon { font-size: 16px; }
 .report-subtitle {
   font-size: 11px;
   color: var(--text-muted);
@@ -529,7 +547,6 @@ tbody tr:hover td:nth-child(8) {
 }
 .close-modal-btn:hover { background: var(--surface3); color: var(--text); border-color: var(--accent); }
 
-/* Summary pills row */
 .report-summary {
   padding: 12px 24px;
   display: flex;
@@ -557,7 +574,6 @@ tbody tr:hover td:nth-child(8) {
 .chip-partial .chip-num { color: #f5a623; }
 .chip-total .chip-num { color: var(--accent); }
 
-/* Filter tabs */
 .report-tabs {
   display: flex;
   align-items: center;
@@ -591,7 +607,6 @@ tbody tr:hover td:nth-child(8) {
 .report-tab.tab-pd.active-tab { color: #f5a623; border-top-color: #f5a623; }
 .report-tab.tab-all.active-tab { color: var(--accent); border-top-color: var(--accent); }
 
-/* Report table */
 .report-body {
   padding: 0;
   overflow-x: auto;
@@ -630,7 +645,6 @@ tbody tr:hover td:nth-child(8) {
   background: transparent;
 }
 
-/* Status badge in report */
 .rstatus-badge {
   display: inline-flex;
   align-items: center;
@@ -653,7 +667,6 @@ tbody tr:hover td:nth-child(8) {
   border: 1px solid rgba(245,166,35,0.3);
 }
 
-/* Action items in report */
 .report-actions-list {
   display: flex;
   flex-direction: column;
@@ -682,7 +695,6 @@ tbody tr:hover td:nth-child(8) {
   color: var(--accent);
 }
 
-/* Day badge in report */
 .report-day-badge {
   display: inline-block;
   padding: 2px 6px;
@@ -793,13 +805,11 @@ tbody tr:hover td:nth-child(8) {
   <button class="btn" onclick="resetFilters()">Reset</button>
   <button class="btn" onclick="loadData()">🔄 Refresh Data</button>
 
-  <!-- ★ TASK REPORT BUTTON ★ -->
   <button class="btn-report" onclick="openTaskReport()" style="margin-left:8px;">
     <span class="report-dot"></span>
     📋 Task Report Status
   </button>
 
-  <!-- ★ EMAIL REPORT BUTTON ★ -->
   <button class="btn-report" onclick="openEmailModal()" style="margin-left:8px; background: linear-gradient(135deg, rgba(88,166,255,0.15), rgba(63,185,80,0.15)); border: 1px solid rgba(88,166,255,0.5); color: #58a6ff;">
     📧 Send Email Report
   </button>
@@ -827,12 +837,9 @@ tbody tr:hover td:nth-child(8) {
   </table>
 </div>
 
-<!-- ══════════════════════════════════════════
-     TASK REPORT MODAL
-══════════════════════════════════════════ -->
+<!-- TASK REPORT MODAL -->
 <div class="modal-overlay" id="reportModal" onclick="handleModalClick(event)">
   <div class="report-modal">
-
     <div class="report-header">
       <div class="report-header-left">
         <div class="report-title">
@@ -889,20 +896,14 @@ tbody tr:hover td:nth-child(8) {
 
     <div class="report-footer">
       <div class="report-footer-info" id="reportFooterInfo">–</div>
-      <button class="btn-csv" onclick="downloadCSV()">
-        ⬇ Download CSV
-      </button>
+      <button class="btn-csv" onclick="downloadCSV()">⬇ Download CSV</button>
     </div>
-
   </div>
 </div>
 
-<!-- ══════════════════════════════════════════
-     EMAIL MODAL
-══════════════════════════════════════════ -->
+<!-- EMAIL MODAL -->
 <div class="modal-overlay" id="emailModal" onclick="if(event.target===this) closeEmailModal()">
   <div class="report-modal" style="max-width: 500px;">
-    
     <div class="report-header">
       <div class="report-header-left">
         <div class="report-title">
@@ -917,7 +918,7 @@ tbody tr:hover td:nth-child(8) {
     <div style="padding: 20px;">
       <div style="margin-bottom: 20px;">
         <label style="display: block; margin-bottom: 8px; font-size: 12px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600;">Recipient Email</label>
-        <input type="email" id="recipientEmail" placeholder="Enter email address" value="saravanaraja@tnvl.ca" style="width: 100%; background: var(--surface2); border: 1px solid var(--border); color: var(--text); padding: 8px 12px; border-radius: 6px; font-size: 12px; font-family: 'DM Sans', sans-serif; outline: none;">
+        <input type="email" id="recipientEmail" placeholder="Enter email address" value="saravanaraja@tnvl.ca, bkarthick@bdmalliance.com" style="width: 100%; background: var(--surface2); border: 1px solid var(--border); color: var(--text); padding: 8px 12px; border-radius: 6px; font-size: 12px; font-family: 'DM Sans', sans-serif; outline: none;">
       </div>
 
       <div style="margin-bottom: 20px;">
@@ -929,32 +930,49 @@ tbody tr:hover td:nth-child(8) {
         <label style="display: block; margin-bottom: 8px; font-size: 12px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600;">Include Data</label>
         <div style="display: flex; flex-direction: column; gap: 8px;">
           <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
-            <input type="checkbox" id="includeSummary" checked style="margin: 0;">
-            <span style="font-size: 12px;">Summary Statistics</span>
-          </label>
-          <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
-            <input type="checkbox" id="includeRecentLeads" checked style="margin: 0;">
-            <span style="font-size: 12px;">Recent Leads (Top 10)</span>
-          </label>
-          <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
             <input type="checkbox" id="includeTaskReport" checked style="margin: 0;">
-            <span style="font-size: 12px;">Current Task Report Data</span>
+            <span style="font-size: 12px;">Task Report (7 columns: Agent, Lead ID, Customer Name, Bucket, Move Date, Status, Action Items)</span>
           </label>
         </div>
       </div>
 
       <div style="display: flex; gap: 10px; justify-content: flex-end;">
         <button class="btn" onclick="closeEmailModal()">Cancel</button>
-        <button class="btn btn-primary" onclick="sendEmailReport()">
-          📧 Send Email
-        </button>
+        <button class="btn btn-primary" onclick="sendEmailReport()">📧 Send Email</button>
       </div>
     </div>
-
   </div>
 </div>
 
 <script>
+// ─────────────────────────────────────────────
+// SHIFT DATE LOGIC
+// Shift boundary = 12:00 PM IST (UTC+5:30)
+// - Before 12:00 PM IST → show YESTERDAY (still in previous day's shift)
+// - At/After 12:00 PM IST → show TODAY (new shift started)
+// ─────────────────────────────────────────────
+function getShiftDate() {
+  const now = new Date();
+
+  // Convert UTC → IST by adding UTC+5:30 offset directly
+  // Do NOT use getTimezoneOffset() — that cancels out the IST offset
+  const IST_OFFSET_MS = (5 * 60 + 30) * 60 * 1000;
+  const istNow = new Date(now.getTime() + IST_OFFSET_MS);
+
+  // Use UTC methods on istNow — which now represents IST wall-clock time
+  const istHour = istNow.getUTCHours();
+
+  // Before 12:00 PM IST → still in yesterday's shift
+  if (istHour < 12) {
+    const yesterday = new Date(istNow);
+    yesterday.setUTCDate(yesterday.getUTCDate() - 1);
+    return yesterday.toISOString().slice(0, 10);
+  }
+
+  // At or after 12:00 PM IST → today's shift
+  return istNow.toISOString().slice(0, 10);
+}
+
 // ─────────────────────────────────────────────
 // FOLLOW-UP STRATEGY DATA
 // ─────────────────────────────────────────────
@@ -1125,12 +1143,9 @@ function parseCSV(text) {
       if (h === 'bucket' && val.includes('-')) val = val.replace('-', ' ');
       obj[h] = val;
     });
-    
-    // Calculate bucket type based on dates
     if (obj.received && obj.move) {
       obj.bucket = calculateBucketType(obj.received, obj.move);
     }
-    
     return obj;
   }).filter(r => {
     if (!r.id || r.id === '' || !r.agent) return false;
@@ -1174,25 +1189,26 @@ function getLocalISODate(date) {
   return (new Date(date - tzOffset)).toISOString().slice(0, 10);
 }
 
-const todayDateObj = new Date();
-const TODAY = getLocalISODate(todayDateObj);
+// TODAY = shift date based on IST 12:00 PM cutoff
+const TODAY = getShiftDate();
 
 function generateDateRange(fromDate, toDate) {
   const dates = [];
   let current = new Date(fromDate);
   const end = new Date(toDate);
   while (current <= end) {
-    dates.push(getLocalISODate(current));
+    dates.push(current.toISOString().slice(0, 10));
     current.setDate(current.getDate() + 1);
   }
   return dates;
 }
 
+// Initialise date inputs to shift date
 setTimeout(() => {
-  if (document.getElementById('moveDateFrom') && !document.getElementById('moveDateFrom').value) {
-    document.getElementById('moveDateFrom').value = TODAY;
-    document.getElementById('moveDateTo').value = TODAY;
-  }
+  const fromEl = document.getElementById('moveDateFrom');
+  const toEl   = document.getElementById('moveDateTo');
+  if (fromEl && !fromEl.value) fromEl.value = TODAY;
+  if (toEl   && !toEl.value)   toEl.value   = TODAY;
 }, 0);
 
 let DATE_COLS = generateDateRange(TODAY, TODAY);
@@ -1210,19 +1226,11 @@ function dateDiffDays(a, b) {
 
 function calculateBucketType(receivedDate, moveDate) {
   if (!receivedDate || !moveDate) return '';
-  
-  const diffDays = dateDiffDays(moveDate, receivedDate) + 1; // +1 because received date is day 1
-  
-  if (diffDays < 5) {
-    return 'Bucket 1';
-  } else if (diffDays >= 6 && diffDays <= 19) {
-    return 'Bucket 2';
-  } else if (diffDays >= 20 && diffDays <= 35) {
-    return 'Bucket 3';
-  } else if (diffDays > 35) {
-    return 'Bucket 4';
-  }
-  
+  const diffDays = dateDiffDays(moveDate, receivedDate) + 1;
+  if (diffDays < 5)                        return 'Bucket 1';
+  if (diffDays >= 6  && diffDays <= 19)    return 'Bucket 2';
+  if (diffDays >= 20 && diffDays <= 35)    return 'Bucket 3';
+  if (diffDays > 35)                       return 'Bucket 4';
   return '';
 }
 function getBucketClass(bucket) {
@@ -1236,11 +1244,11 @@ function getBucketClass(bucket) {
 function getStatusClass(status) {
   if (!status) return '';
   const s = status.toLowerCase();
-  if (s.includes('open')) return 'status-open';
-  if (s.includes('booked')) return 'status-booked';
-  if (s.includes('closed')) return 'status-closed';
-  if (s === 'new') return 'status-new';
-  if (s.includes('follow up')) return 'status-open';
+  if (s.includes('open'))       return 'status-open';
+  if (s.includes('booked'))     return 'status-booked';
+  if (s.includes('closed'))     return 'status-closed';
+  if (s === 'new')              return 'status-new';
+  if (s.includes('follow up'))  return 'status-open';
   return '';
 }
 function formatMonthDay(d) {
@@ -1292,8 +1300,8 @@ function sortBy(key) {
 }
 
 function applyFilters() {
-  const agent  = document.getElementById('agentFilter').value;
-  const bucket = document.getElementById('bucketFilter').value;
+  const agent    = document.getElementById('agentFilter').value;
+  const bucket   = document.getElementById('bucketFilter').value;
   const fromDate = document.getElementById('moveDateFrom').value;
   const toDate   = document.getElementById('moveDateTo').value;
 
@@ -1315,6 +1323,7 @@ function applyFilters() {
 function resetFilters() {
   document.getElementById('agentFilter').value  = '';
   document.getElementById('bucketFilter').value = '';
+  // Reset to current shift date
   document.getElementById('moveDateFrom').value = TODAY;
   document.getElementById('moveDateTo').value   = TODAY;
   applyFilters();
@@ -1368,7 +1377,7 @@ function renderTable() {
     const sc = getStatusClass(r.status);
     const agentClass = 'agent-' + (r.agent || 'Unknown');
     const showTask = document.getElementById('toggleTaskStatus')?.checked ?? true;
-    const savedTaskStatus = localStorage.getItem('task_status_' + r.id) || '';
+    const savedTaskStatus = localStorage.getItem('task_status_' + TODAY + '_' + r.id) || '';
 
     html += `<tr>
       <td><span class="agent-badge ${agentClass}">${r.agent||'–'}</span></td>
@@ -1392,40 +1401,32 @@ function renderTable() {
 
     DATE_COLS.forEach(d => {
       const isToday = d === TODAY;
-      const savedTS = localStorage.getItem('task_status_' + r.id) || '';
+      const savedTS = localStorage.getItem('task_status_' + TODAY + '_' + r.id) || '';
       let taskSymbol = '';
       if (isToday) {
-        if (savedTS === 'Completed') taskSymbol = '<div style="margin-top:4px;display:inline-block;"><span style="font-size:14px;background:rgba(63,185,80,0.2);padding:2px 4px;border-radius:4px;border:1px solid rgba(63,185,80,0.4);" title="Completed">✅</span></div>';
+        if (savedTS === 'Completed')      taskSymbol = '<div style="margin-top:4px;display:inline-block;"><span style="font-size:14px;background:rgba(63,185,80,0.2);padding:2px 4px;border-radius:4px;border:1px solid rgba(63,185,80,0.4);" title="Completed">✅</span></div>';
         else if (savedTS === 'Partially done') taskSymbol = '<div style="margin-top:4px;display:inline-block;"><span style="font-size:14px;background:rgba(245,166,35,0.2);padding:2px 4px;border-radius:4px;border:1px solid rgba(245,166,35,0.4);" title="Partially done">⏳</span></div>';
-        else if (savedTS === 'Not started') taskSymbol = '<div style="margin-top:4px;display:inline-block;"><span style="font-size:14px;background:rgba(255,77,77,0.2);padding:2px 4px;border-radius:4px;border:1px solid rgba(255,77,77,0.4);" title="Not started">❌</span></div>';
+        else if (savedTS === 'Not started')    taskSymbol = '<div style="margin-top:4px;display:inline-block;"><span style="font-size:14px;background:rgba(255,77,77,0.2);padding:2px 4px;border-radius:4px;border:1px solid rgba(255,77,77,0.4);" title="Not started">❌</span></div>';
       }
 
       if (r.received && r.move && d >= r.received && d <= r.move) {
         const dayNum     = dateDiffDays(d, r.received) + 1;
         const daysToMove = dateDiffDays(r.move, d);
         const isMoveDay  = d === r.move;
-        
-        // Calculate bucket-specific day for action items
-        const totalDays = dateDiffDays(r.move, r.received) + 1;
+        const totalDays  = dateDiffDays(r.move, r.received) + 1;
         let actionDay;
-        if (r.bucket === 'Bucket 1') {
-          actionDay = dayNum;  // For Bucket 1, use actual day from received date
-        } else if (r.bucket === 'Bucket 2') {
-          actionDay = Math.abs(totalDays - 5);
-        } else if (r.bucket === 'Bucket 3') {
-          actionDay = Math.abs(19 - totalDays);
-        } else if (r.bucket === 'Bucket 4') {
-          actionDay = Math.abs(35 - totalDays);
-        } else {
-          actionDay = dayNum;
-        }
-        
+        if      (r.bucket === 'Bucket 1') actionDay = dayNum;
+        else if (r.bucket === 'Bucket 2') actionDay = Math.abs(totalDays - 5);
+        else if (r.bucket === 'Bucket 3') actionDay = Math.abs(19 - totalDays);
+        else if (r.bucket === 'Bucket 4') actionDay = Math.abs(35 - totalDays);
+        else                               actionDay = dayNum;
+
         const action = getStrategyAction(r.bucket, actionDay, daysToMove);
         const colorClass = isMoveDay ? 'bc-move' : `bc-${bc}`;
 
         let innerHtml = '';
         if (action && action.steps && action.steps.length > 0) {
-          const moveDot = isMoveDay ? '<span class="move-day-dot" title="Move Day"></span>' : '';
+          const moveDot  = isMoveDay ? '<span class="move-day-dot" title="Move Day"></span>' : '';
           const stepsHtml = action.steps.map((s, i) =>
             `<div class="action-line type-${action.type}">
               <span class="action-num type-${action.type}">${i+1}</span>
@@ -1448,7 +1449,7 @@ function renderTable() {
 }
 
 function saveTaskStatus(id, value) {
-  localStorage.setItem('task_status_' + id, value);
+  localStorage.setItem('task_status_' + TODAY + '_' + id, value);
   renderTable();
 }
 
@@ -1476,9 +1477,9 @@ function goPage(p) {
 
 function initAgents() {
   const agents = [...new Set(RAW.map(r => r.agent).filter(Boolean))].sort();
-  const sel = document.getElementById('agentFilter');
-  sel.innerHTML = '<option value="">All Agents</option>';
+  const sel  = document.getElementById('agentFilter');
   const rsel = document.getElementById('reportAgentFilter');
+  sel.innerHTML  = '<option value="">All Agents</option>';
   rsel.innerHTML = '<option value="">All Agents</option>';
   agents.forEach(a => {
     [sel, rsel].forEach(s => {
@@ -1499,12 +1500,11 @@ document.addEventListener('keydown', e => {
 // ══════════════════════════════════════════
 // TASK REPORT MODAL LOGIC
 // ══════════════════════════════════════════
-let reportData = [];         // current report rows (all)
-let reportFilteredData = []; // after tab filter
+let reportData = [];
+let reportFilteredData = [];
 let activeReportTab = 'all';
 
 function openTaskReport() {
-  // Pre-fill date to today
   document.getElementById('reportDate').value = TODAY;
   document.getElementById('reportModal').classList.add('open');
   generateReport();
@@ -1513,15 +1513,12 @@ function openTaskReport() {
 function openEmailModal() {
   document.getElementById('emailModal').classList.add('open');
 }
-
 function closeEmailModal() {
   document.getElementById('emailModal').classList.remove('open');
 }
-
 function closeTaskReport() {
   document.getElementById('reportModal').classList.remove('open');
 }
-
 function handleModalClick(e) {
   if (e.target === document.getElementById('reportModal')) closeTaskReport();
 }
@@ -1533,14 +1530,8 @@ function setReportTab(tab, el) {
   renderReportTable();
 }
 
-/**
- * Core logic: for each lead in RAW, check if the chosen date falls
- * within that lead's received→move window AND has action items.
- * Then look at the stored task status.
- * Only include rows where status is "Not started" OR "Partially done".
- */
 function generateReport() {
-  const chosenDate = document.getElementById('reportDate').value;
+  const chosenDate  = document.getElementById('reportDate').value;
   const agentFilter = document.getElementById('reportAgentFilter').value;
   if (!chosenDate) return;
 
@@ -1556,35 +1547,24 @@ function generateReport() {
     const isMoveDay  = chosenDate === r.move;
     const action     = getStrategyAction(r.bucket, dayNum, daysToMove);
 
-    // Only include if there are action items
     if (!action || !action.steps || action.steps.length === 0) return;
 
-    const taskStatus = localStorage.getItem('task_status_' + r.id) || '';
-
-    // Only include "Not started" or "Partially done"
+    const taskStatus = localStorage.getItem('task_status_' + TODAY + '_' + r.id) || '';
     if (taskStatus !== 'Not started' && taskStatus !== 'Partially done') return;
 
     reportData.push({
-      agent: r.agent,
-      id: r.id,
-      custName: r.custName,
-      bucket: r.bucket,
-      move: r.move,
-      dayNum,
-      daysToMove,
-      isMoveDay,
-      taskStatus,
-      actionSteps: action.steps,
-      actionType: action.type,
+      agent: r.agent, id: r.id, custName: r.custName,
+      bucket: r.bucket, move: r.move,
+      dayNum, daysToMove, isMoveDay, taskStatus,
+      actionSteps: action.steps, actionType: action.type,
     });
   });
 
-  // Update summary counts
   const nsCount = reportData.filter(r => r.taskStatus === 'Not started').length;
   const pdCount = reportData.filter(r => r.taskStatus === 'Partially done').length;
   document.getElementById('sumTotal').textContent = reportData.length;
-  document.getElementById('sumNS').textContent = nsCount;
-  document.getElementById('sumPD').textContent = pdCount;
+  document.getElementById('sumNS').textContent    = nsCount;
+  document.getElementById('sumPD').textContent    = pdCount;
 
   const dateLabel = formatMonthDay(chosenDate) + ', ' + chosenDate.slice(0,4);
   document.getElementById('reportSubtitle').textContent =
@@ -1594,16 +1574,10 @@ function generateReport() {
 }
 
 function renderReportTable() {
-  // Tab filter
-  if (activeReportTab === 'ns') {
-    reportFilteredData = reportData.filter(r => r.taskStatus === 'Not started');
-  } else if (activeReportTab === 'pd') {
-    reportFilteredData = reportData.filter(r => r.taskStatus === 'Partially done');
-  } else {
-    reportFilteredData = [...reportData];
-  }
+  if (activeReportTab === 'ns')       reportFilteredData = reportData.filter(r => r.taskStatus === 'Not started');
+  else if (activeReportTab === 'pd')  reportFilteredData = reportData.filter(r => r.taskStatus === 'Partially done');
+  else                                reportFilteredData = [...reportData];
 
-  // Sort: Not started first, then Partially done; within each group sort by bucket
   const bucketOrder = {'Bucket 1':1,'Bucket 2':2,'Bucket 3':3,'Bucket 4':4};
   const statusOrder = {'Not started':1,'Partially done':2};
   reportFilteredData.sort((a, b) => {
@@ -1667,65 +1641,66 @@ function renderReportTable() {
 // ── Email Sending ──
 async function sendEmailReport() {
   const recipientEmail = document.getElementById('recipientEmail').value.trim();
-  const subject = document.getElementById('emailSubject').value.trim();
-  
-  if (!recipientEmail) {
-    alert('Please enter a recipient email address.');
-    return;
-  }
-  
-  const includeSummary = document.getElementById('includeSummary').checked;
-  const includeRecentLeads = document.getElementById('includeRecentLeads').checked;
-  const includeTaskReport = document.getElementById('includeTaskReport').checked;
-  
-  const reportData = {
-    totalLeads: RAW.length,
-    statusCounts: {
-      open: RAW.filter(r => r.status === 'Open').length,
-      closed: RAW.filter(r => r.status === 'Closed').length,
-      booked: RAW.filter(r => r.status === 'Booked').length
-    },
-    recentLeads: includeRecentLeads ? RAW.slice(0, 10).map(r => ({
-      name: r.custName || r.id || 'N/A',
-      status: r.status || 'N/A',
-      date: r.received || 'N/A',
-      source: r.source || 'N/A'
-    })) : [],
-    taskReportData: includeTaskReport ? {
-      date: document.getElementById('reportDate').value,
-      totalIssues: reportFilteredData.length,
-      notStarted: reportFilteredData.filter(r => r.taskStatus === 'Not started').length,
-      partiallyDone: reportFilteredData.filter(r => r.taskStatus === 'Partially done').length,
-      issues: reportFilteredData.slice(0, 20).map(r => ({
-        agent: r.agent || '',
-        leadId: r.id || '',
-        customerName: r.custName || '',
-        bucket: r.bucket || '',
-        moveDate: r.move || '',
-        dayInTimeline: `Day ${r.dayNum}`,
-        taskStatus: r.taskStatus || '',
-        actionItems: r.actionSteps.join(' | ') || ''
-      }))
-    } : null
+  const subject        = document.getElementById('emailSubject').value.trim();
+
+  if (!recipientEmail) { alert('Please enter a recipient email address.'); return; }
+
+  const chosenDate = TODAY;
+  const freshReportData = [];
+
+  RAW.forEach(r => {
+    if (!r.received || !r.move) return;
+    if (chosenDate < r.received || chosenDate > r.move) return;
+    const dayNum     = dateDiffDays(chosenDate, r.received) + 1;
+    const daysToMove = dateDiffDays(r.move, chosenDate);
+    const isMoveDay  = chosenDate === r.move;
+    const action     = getStrategyAction(r.bucket, dayNum, daysToMove);
+    if (!action || !action.steps || action.steps.length === 0) return;
+    const taskStatus = localStorage.getItem('task_status_' + TODAY + '_' + r.id) || '';
+    if (taskStatus !== 'Not started' && taskStatus !== 'Partially done') return;
+    freshReportData.push({ agent:r.agent, id:r.id, custName:r.custName, bucket:r.bucket, move:r.move, dayNum, daysToMove, isMoveDay, taskStatus, actionSteps:action.steps });
+  });
+
+  const bucketOrder = {'Bucket 1':1,'Bucket 2':2,'Bucket 3':3,'Bucket 4':4};
+  const statusOrder = {'Not started':1,'Partially done':2};
+  freshReportData.sort((a, b) => {
+    const so = (statusOrder[a.taskStatus]||9) - (statusOrder[b.taskStatus]||9);
+    if (so !== 0) return so;
+    return (bucketOrder[a.bucket]||9) - (bucketOrder[b.bucket]||9);
+  });
+
+  const nsCount = freshReportData.filter(r => r.taskStatus === 'Not started').length;
+  const pdCount = freshReportData.filter(r => r.taskStatus === 'Partially done').length;
+
+  const payload = {
+    toEmail: recipientEmail,
+    subject: subject || 'Task Report Status',
+    reportData: {
+      taskReportData: {
+        date: chosenDate,
+        totalIssues: freshReportData.length,
+        notStarted: nsCount,
+        partiallyDone: pdCount,
+        issues: freshReportData.map(r => ({
+          agent: r.agent||'', leadId: r.id||'', customerName: r.custName||'',
+          bucket: r.bucket||'', moveDate: r.move||'',
+          dayInTimeline: r.isMoveDay ? `Move Day (Day ${r.dayNum})` : `Day ${r.dayNum} · ${r.daysToMove}d to move`,
+          taskStatus: r.taskStatus||'',
+          actionItems: (r.actionSteps||[]).join(' | ')
+        }))
+      }
+    }
   };
-  
+
   try {
     const response = await fetch('/api/send-email', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        toEmail: recipientEmail,
-        subject: subject,
-        reportData: reportData
-      })
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
     });
-    
     const result = await response.json();
-    
     if (result.success) {
-      alert('Email sent successfully!');
+      alert(`Email sent successfully! (${freshReportData.length} issue${freshReportData.length !== 1 ? 's' : ''} reported)`);
       closeEmailModal();
     } else {
       alert('Failed to send email: ' + result.message);
@@ -1738,39 +1713,23 @@ async function sendEmailReport() {
 
 // ── CSV Export ──
 function downloadCSV() {
-  if (reportFilteredData.length === 0) {
-    alert('No data to export.');
-    return;
-  }
+  if (reportFilteredData.length === 0) { alert('No data to export.'); return; }
   const chosenDate = document.getElementById('reportDate').value;
   const headers = ['#','Agent','Lead ID','Customer Name','Bucket','Move Date','Day in Timeline','Days to Move','Is Move Day','Task Status','Action Items'];
   const rows = reportFilteredData.map((r, idx) => [
-    idx + 1,
-    r.agent || '',
-    r.id || '',
-    r.custName || '',
-    r.bucket || '',
-    r.move || '',
-    `Day ${r.dayNum}`,
-    r.daysToMove,
-    r.isMoveDay ? 'Yes' : 'No',
-    r.taskStatus,
-    r.actionSteps.join(' | ')
+    idx+1, r.agent||'', r.id||'', r.custName||'', r.bucket||'', r.move||'',
+    `Day ${r.dayNum}`, r.daysToMove, r.isMoveDay ? 'Yes' : 'No',
+    r.taskStatus, r.actionSteps.join(' | ')
   ]);
-
   const csvContent = [headers, ...rows]
     .map(row => row.map(cell => `"${String(cell).replace(/"/g,'""')}"`).join(','))
     .join('\n');
-
   const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `task-report-${chosenDate}.csv`;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url; a.download = `task-report-${chosenDate}.csv`;
+  document.body.appendChild(a); a.click();
+  document.body.removeChild(a); URL.revokeObjectURL(url);
 }
 
 loadData();
