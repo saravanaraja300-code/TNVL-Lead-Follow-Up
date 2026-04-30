@@ -3,12 +3,13 @@ const http = require('http');
 const fs = require('fs');
 const path = require('path');
 const https = require('https');
+const nodemailer = require('nodemailer');
 
 const PORT = process.env.PORT || 3030;
 const SHEET_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSXsdx0UFbCKXSCYwGzxEC5iRO-L31puQ_Ta3xBGRIwyxCW7-PGSmsRfX9bJ3yFdY6DB7RzN98WvcRe/pub?output=csv';
 
 // ═══════════════════════════════════════════════════════════════
-//  EMAIL HANDLER — Uses Resend API (HTTPS port 443, never blocked)
+//  EMAIL HANDLER — Uses Zoho SMTP (Nodemailer)
 // ═══════════════════════════════════════════════════════════════
 async function handleEmailRequest(req, res) {
   let body = '';
@@ -18,104 +19,98 @@ async function handleEmailRequest(req, res) {
     try {
       const { toEmail, subject, reportData } = JSON.parse(body);
 
-      console.log('📧 Lead Tracker Email request:', {
+      console.log('📧 Email request received:', {
         toEmail,
         subject,
-        hasReportData: !!reportData,
-        totalLeads: reportData?.totalLeads || 0
+        hasReportData: !!reportData
       });
 
-      if (!process.env.RESEND_API_KEY) {
-        console.error('❌ Email failed: Missing RESEND_API_KEY in environment variables');
+      if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
+        console.error('❌ Email failed: Missing EMAIL_USER or EMAIL_PASS in .env');
         res.writeHead(500, { 'Content-Type': 'application/json' });
         return res.end(JSON.stringify({
           success: false,
-          message: 'RESEND_API_KEY missing. Please add it in Render environment variables.'
+          message: 'Email credentials missing in server .env'
         }));
       }
+
+      // ── FIXED: Use port 465 + secure:true (SSL) instead of 587 + STARTTLS ──
+      // Zoho rejects AUTH PLAIN from cloud IPs on port 587.
+      // Port 465 forces AUTH LOGIN which Zoho accepts from any IP.
+      const transporter = nodemailer.createTransport({
+        host: 'smtppro.zoho.com',
+        port: 465,
+        secure: true,
+        authMethod: 'LOGIN',
+        auth: {
+          type: 'login',
+          user: process.env.EMAIL_USER,
+          pass: process.env.EMAIL_PASS
+        },
+        connectionTimeout: 30000,
+        greetingTimeout: 15000,
+        socketTimeout: 45000,
+        pool: true,
+        maxConnections: 5,
+        maxMessages: 100
+      });
 
       const htmlContent = generateEmailHTML(reportData);
 
       // Build recipients array — supports comma-separated emails
-      const recipients = toEmail
-        .split(',')
-        .map(e => e.trim())
-        .filter(Boolean);
+      const recipients = toEmail || process.env.EMAIL_RECIPIENTS || process.env.EMAIL_USER;
 
-      const emailPayload = JSON.stringify({
-        from: 'Lead Tracker <onboarding@resend.dev>',
+      const mailOptions = {
+        from: `"${process.env.EMAIL_FROM_NAME || 'TNVL Reports'}" <${process.env.EMAIL_FROM || process.env.EMAIL_USER}>`,
         to: recipients,
-        subject: subject || 'Task Report Status',
+        subject: subject || `TNVL Performance Reports Bundle - ${new Date().toLocaleDateString('en-CA')}`,
         html: htmlContent
-      });
+      };
 
-      console.log(`📨 Sending Lead Tracker report via Resend to: ${recipients.join(', ')}...`);
+      console.log(`📨 Sending PDF report to: ${recipients}...`);
       const startTime = Date.now();
-
-      // Call Resend API over HTTPS (port 443 — never blocked by any host)
-      const result = await callResendAPI(emailPayload);
+      const info = await transporter.sendMail(mailOptions);
       const duration = Date.now() - startTime;
+      console.log(`✅ Email sent successfully in ${duration}ms:`, info.messageId);
 
-      console.log(`✅ Email sent successfully via Resend in ${duration}ms:`, result.id);
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({
         success: true,
         message: 'Email sent successfully!',
-        messageId: result.id,
+        messageId: info.messageId,
         duration
       }));
 
     } catch (error) {
-      console.error('❌ Email Error:', error.message);
+      console.error('❌ SMTP Error Details:', {
+        code: error.code,
+        message: error.message,
+        errno: error.errno,
+        syscall: error.syscall,
+        address: error.address,
+        port: error.port
+      });
+
+      let userMessage = 'Failed to send report';
+      if (error.code === 'EAUTH') {
+        userMessage = 'Authentication failed. Check Zoho credentials or use an App Password (accounts.zoho.com → Security → App Passwords).';
+      } else if (error.code === 'ECONNREFUSED') {
+        userMessage = 'Connection refused. Port 465 may be blocked by your hosting firewall — contact your host to open outbound port 465.';
+      } else if (error.code === 'ETIMEDOUT' || error.message.includes('timeout')) {
+        userMessage = 'Connection timed out. Firewall may be blocking port 465. Try whitelisting smtp.zoho.com:465.';
+      } else if (error.code === 'ENOTFOUND') {
+        userMessage = 'DNS resolution failed. Cannot reach smtp.zoho.com — check server DNS settings.';
+      } else if (error.code === 'EHOSTUNREACH') {
+        userMessage = 'Host unreachable. Check network connectivity on the server.';
+      }
+
       res.writeHead(500, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({
         success: false,
-        message: error.message || 'Failed to send email',
+        message: userMessage,
         details: error.message
       }));
     }
-  });
-}
-
-// ═══════════════════════════════════════════════════════════════
-//  RESEND API CALLER
-// ═══════════════════════════════════════════════════════════════
-function callResendAPI(emailPayload) {
-  return new Promise((resolve, reject) => {
-    const options = {
-      hostname: 'api.resend.com',
-      path: '/emails',
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${process.env.RESEND_API_KEY}`,
-        'Content-Type': 'application/json',
-        'Content-Length': Buffer.byteLength(emailPayload)
-      }
-    };
-
-    const apiReq = https.request(options, (apiRes) => {
-      let data = '';
-      apiRes.on('data', chunk => { data += chunk; });
-      apiRes.on('end', () => {
-        try {
-          const result = JSON.parse(data);
-          if (apiRes.statusCode === 200 || apiRes.statusCode === 201) {
-            resolve(result);
-          } else {
-            reject(new Error(result.message || result.error?.message || `Resend API error: ${apiRes.statusCode}`));
-          }
-        } catch (e) {
-          reject(new Error('Failed to parse Resend API response'));
-        }
-      });
-    });
-
-    apiReq.on('error', (err) => {
-      reject(new Error(`Network error: ${err.message}`));
-    });
-
-    apiReq.write(emailPayload);
-    apiReq.end();
   });
 }
 
@@ -317,8 +312,8 @@ server.listen(PORT, () => {
   console.log('');
   console.log('✅ Lead Tracker Server running!');
   console.log(`   Open in browser  : http://localhost:${PORT}`);
-  console.log(`   Email via         : Resend API (HTTPS — no SMTP port issues)`);
-  console.log(`   Resend API Key    : ${process.env.RESEND_API_KEY ? '✅ Set' : '⚠️  Not set — add RESEND_API_KEY in Render env vars'}`);
+  console.log(`   Email user       : ${process.env.EMAIL_USER || '⚠️  Not set'}`);
+  console.log(`   Email pass       : ${process.env.EMAIL_PASS ? '✅ Set' : '⚠️  Not set'}`);
   console.log('');
   console.log('   Press Ctrl+C to stop.');
   console.log('');
