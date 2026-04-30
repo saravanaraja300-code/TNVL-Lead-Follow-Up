@@ -946,6 +946,11 @@ tbody tr:hover td:nth-child(8) {
 
 <script>
 // ─────────────────────────────────────────────
+// GLOBAL STATE
+// ─────────────────────────────────────────────
+let GLOBAL_TASK_STATUSES = {};
+
+// ─────────────────────────────────────────────
 // SHIFT DATE LOGIC
 // Shift boundary = 12:00 PM IST (UTC+5:30)
 // - Before 12:00 PM IST → show YESTERDAY (still in previous day's shift)
@@ -1089,10 +1094,20 @@ let RAW = [];
 async function loadData() {
   showLoadingState();
   try {
-    const response = await fetch('/api/data');
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    const text = await response.text();
+    // Parallel fetch for speed
+    const [dataRes, statusRes] = await Promise.all([
+      fetch('/api/data'),
+      fetch('/api/task-status').catch(() => null)
+    ]);
+
+    if (!dataRes.ok) throw new Error(`HTTP ${dataRes.status}`);
+    const text = await dataRes.text();
     RAW = parseCSV(text);
+
+    if (statusRes && statusRes.ok) {
+      GLOBAL_TASK_STATUSES = await statusRes.json();
+    }
+
     if (RAW.length === 0) {
       showError('No active leads found.');
       return;
@@ -1105,6 +1120,25 @@ async function loadData() {
     showError('Error loading data: ' + err.message);
   }
 }
+
+async function fetchTaskStatuses() {
+  try {
+    const res = await fetch('/api/task-status');
+    if (res.ok) {
+      GLOBAL_TASK_STATUSES = await res.json();
+      renderTable();
+      // If report modal is open, refresh it too
+      if (document.getElementById('reportModal').classList.contains('open')) {
+        generateReport();
+      }
+    }
+  } catch (e) {
+    console.warn('Sync failed:', e);
+  }
+}
+
+// Polling every 30 seconds
+setInterval(fetchTaskStatuses, 30000);
 
 function parseCSV(text) {
   const lines = text.trim().split('\n');
@@ -1377,7 +1411,8 @@ function renderTable() {
     const sc = getStatusClass(r.status);
     const agentClass = 'agent-' + (r.agent || 'Unknown');
     const showTask = document.getElementById('toggleTaskStatus')?.checked ?? true;
-    const savedTaskStatus = localStorage.getItem('task_status_' + TODAY + '_' + r.id) || '';
+    const taskKey = 'task_status_' + TODAY + '_' + r.id;
+    const savedTaskStatus = GLOBAL_TASK_STATUSES[taskKey] || '';
 
     html += `<tr>
       <td><span class="agent-badge ${agentClass}">${r.agent||'–'}</span></td>
@@ -1401,7 +1436,7 @@ function renderTable() {
 
     DATE_COLS.forEach(d => {
       const isToday = d === TODAY;
-      const savedTS = localStorage.getItem('task_status_' + TODAY + '_' + r.id) || '';
+      const savedTS = GLOBAL_TASK_STATUSES[taskKey] || '';
       let taskSymbol = '';
       if (isToday) {
         if (savedTS === 'Completed')      taskSymbol = '<div style="margin-top:4px;display:inline-block;"><span style="font-size:14px;background:rgba(63,185,80,0.2);padding:2px 4px;border-radius:4px;border:1px solid rgba(63,185,80,0.4);" title="Completed">✅</span></div>';
@@ -1448,9 +1483,20 @@ function renderTable() {
   body.innerHTML = html;
 }
 
-function saveTaskStatus(id, value) {
-  localStorage.setItem('task_status_' + TODAY + '_' + id, value);
-  renderTable();
+async function saveTaskStatus(id, value) {
+  const key = 'task_status_' + TODAY + '_' + id;
+  GLOBAL_TASK_STATUSES[key] = value;
+  renderTable(); // Update UI immediately
+
+  try {
+    await fetch('/api/task-status', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ key, value })
+    });
+  } catch (err) {
+    console.error('Failed to sync task status:', err);
+  }
 }
 
 function renderPagination(pages) {
@@ -1549,7 +1595,8 @@ function generateReport() {
 
     if (!action || !action.steps || action.steps.length === 0) return;
 
-    const taskStatus = localStorage.getItem('task_status_' + TODAY + '_' + r.id) || '';
+    const taskKey = 'task_status_' + TODAY + '_' + r.id;
+    const taskStatus = GLOBAL_TASK_STATUSES[taskKey] || '';
     if (taskStatus !== 'Not started' && taskStatus !== 'Partially done') return;
 
     reportData.push({
