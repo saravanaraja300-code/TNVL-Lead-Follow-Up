@@ -34,11 +34,9 @@ async function handleEmailRequest(req, res) {
         }));
       }
 
-      // ── FIXED: Use port 465 + secure:true (SSL) instead of 587 + STARTTLS ──
-      // Zoho rejects AUTH PLAIN from cloud IPs on port 587.
-      // Port 465 forces AUTH LOGIN which Zoho accepts from any IP.
+      // ── MATCHED TO WORKING PROJECT SETTINGS ──
       const transporter = nodemailer.createTransport({
-        host: 'smtppro.zoho.com',
+        host: 'smtp.zoho.com',
         port: 465,
         secure: true,
         authMethod: 'LOGIN',
