@@ -4,9 +4,27 @@ const fs = require('fs');
 const path = require('path');
 const https = require('https');
 const nodemailer = require('nodemailer');
+const mongoose = require('mongoose');
 
 const PORT = process.env.PORT || 3030;
 const SHEET_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSXsdx0UFbCKXSCYwGzxEC5iRO-L31puQ_Ta3xBGRIwyxCW7-PGSmsRfX9bJ3yFdY6DB7RzN98WvcRe/pub?output=csv';
+
+// ═══════════════════════════════════════════════════════════════
+//  MONGODB CONFIG (Mongoose)
+// ═══════════════════════════════════════════════════════════════
+const taskStatusSchema = new mongoose.Schema({
+  key: { type: String, unique: true },
+  value: String
+});
+const TaskStatus = mongoose.model('TaskStatus', taskStatusSchema);
+
+if (process.env.MONGODB_URI && !process.env.MONGODB_URI.includes('YOUR_PASSWORD')) {
+  mongoose.connect(process.env.MONGODB_URI)
+    .then(() => console.log('✅ Connected to MongoDB Atlas (Mongoose)'))
+    .catch(err => console.error('❌ MongoDB Connection Error:', err.message));
+} else {
+  console.warn('⚠️  MONGODB_URI not properly set in .env. Persistence will not work.');
+}
 
 // ═══════════════════════════════════════════════════════════════
 //  EMAIL HANDLER — Uses Zoho SMTP (Nodemailer)
@@ -110,6 +128,52 @@ async function handleEmailRequest(req, res) {
       }));
     }
   });
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  TASK STATUS HANDLER — Mongoose Integration
+// ═══════════════════════════════════════════════════════════════
+async function handleTaskStatusRequest(req, res) {
+  if (req.method === 'GET') {
+    try {
+      const docs = await TaskStatus.find({});
+      const statusMap = {};
+      docs.forEach(doc => {
+        statusMap[doc.key] = doc.value;
+      });
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      return res.end(JSON.stringify(statusMap));
+    } catch (err) {
+      res.writeHead(500);
+      return res.end(err.message);
+    }
+  }
+
+  if (req.method === 'POST') {
+    let body = '';
+    req.on('data', chunk => { body += chunk.toString(); });
+    req.on('end', async () => {
+      try {
+        const { key, value } = JSON.parse(body);
+        if (key) {
+          await TaskStatus.findOneAndUpdate(
+            { key: key },
+            { $set: { value: value } },
+            { upsert: true, new: true }
+          );
+          console.log(`📝 Mongoose: Task status updated: ${key} -> ${value}`);
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ success: true }));
+        } else {
+          res.writeHead(400);
+          res.end('Missing key');
+        }
+      } catch (e) {
+        res.writeHead(400);
+        res.end('Invalid JSON');
+      }
+    });
+  }
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -258,6 +322,9 @@ const server = http.createServer((req, res) => {
 
   } else if (pathname === '/api/send-email' && req.method === 'POST') {
     handleEmailRequest(req, res);
+
+  } else if (pathname === '/api/task-status') {
+    handleTaskStatusRequest(req, res);
 
   } else {
     const filePath = path.join(__dirname, 'lead_tracker_dashboard.html');
