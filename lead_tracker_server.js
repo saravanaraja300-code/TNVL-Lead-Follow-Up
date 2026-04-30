@@ -37,8 +37,8 @@ async function handleEmailRequest(req, res) {
 
       const transporter = nodemailer.createTransport({
         host: 'smtppro.zoho.com',
-        port: 465,
-        secure: true,
+        port: process.env.EMAIL_PORT || 587,
+        secure: false,
         authMethod: 'LOGIN',
         auth: {
           type: 'login',
