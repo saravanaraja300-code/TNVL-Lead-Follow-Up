@@ -1169,8 +1169,11 @@ function parseCSV(text) {
       let val = (values[i] || '').replace(/^"|"$/g,'').trim();
       if (h === 'received' || h === 'move') {
         const datePart = val.split(' ')[0];
-        if (/^\d{2}-\d{2}-\d{4}$/.test(datePart)) {
-          const [d, m, y] = datePart.split('-');
+        // Support both DD-MM-YYYY and DD-MM-YY
+        if (/^\d{2}-\d{2}-\d{2,4}$/.test(datePart)) {
+          const parts = datePart.split('-');
+          let [d, m, y] = parts;
+          if (y.length === 2) y = '20' + y; // Assume 20xx for 2-digit years
           val = `${y}-${m}-${d}`;
         }
       }
@@ -1255,13 +1258,17 @@ function formatDateShort(d) {
   return `${day}-${m}-${y.slice(2)}`;
 }
 function dateDiffDays(a, b) {
-  return Math.round((new Date(a) - new Date(b)) / 86400000);
+  const d1 = new Date(a);
+  const d2 = new Date(b);
+  if (isNaN(d1) || isNaN(d2)) return 0;
+  return Math.round((d1 - d2) / 86400000);
 }
 
 function calculateBucketType(receivedDate, moveDate) {
   if (!receivedDate || !moveDate) return '';
   const diffDays = dateDiffDays(moveDate, receivedDate) + 1;
-  if (diffDays < 5)                        return 'Bucket 1';
+  // Use inclusive ranges to avoid gaps
+  if (diffDays <= 5)                        return 'Bucket 1';
   if (diffDays >= 6  && diffDays <= 19)    return 'Bucket 2';
   if (diffDays >= 20 && diffDays <= 35)    return 'Bucket 3';
   if (diffDays > 35)                       return 'Bucket 4';
@@ -1285,11 +1292,25 @@ function getStatusClass(status) {
   if (s.includes('follow up'))  return 'status-open';
   return '';
 }
-function formatMonthDay(d) {
+function getMonthDay(d) {
   if (!d) return '';
   const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
   const [y, m, day] = d.split('-');
   return `${months[parseInt(m,10)-1]} ${parseInt(day,10)}`;
+}
+
+function getLeadActionForDate(r, d) {
+  if (!r.received || !r.move || d < r.received || d > r.move) return null;
+  const dayNum     = dateDiffDays(d, r.received) + 1;
+  const daysToMove = dateDiffDays(r.move, d);
+  const totalDays  = dateDiffDays(r.move, r.received) + 1;
+  let actionDay;
+  if      (r.bucket === 'Bucket 1') actionDay = dayNum;
+  else if (r.bucket === 'Bucket 2') actionDay = Math.abs(totalDays - 5);
+  else if (r.bucket === 'Bucket 3') actionDay = Math.abs(19 - totalDays);
+  else if (r.bucket === 'Bucket 4') actionDay = Math.abs(35 - totalDays);
+  else                               actionDay = dayNum;
+  return getStrategyAction(r.bucket, actionDay, daysToMove);
 }
 
 // ─────────────────────────────────────────────
@@ -1323,7 +1344,7 @@ function buildHead() {
   head.innerHTML = html;
   const from = DATE_COLS[0], to = DATE_COLS[DATE_COLS.length - 1];
   document.getElementById('headerSub').textContent =
-    `${formatMonthDay(from)} – ${formatMonthDay(to)}, ${from ? from.slice(0,4) : ''} \u00a0|\u00a0 Move Timeline View`;
+    `${getMonthDay(from)} – ${getMonthDay(to)}, ${from ? from.slice(0,4) : ''} \u00a0|\u00a0 Move Timeline View`;
 }
 
 let sortKey = 'received', sortDir = -1;
@@ -1444,36 +1465,24 @@ function renderTable() {
         else if (savedTS === 'Not started')    taskSymbol = '<div style="margin-top:4px;display:inline-block;"><span style="font-size:14px;background:rgba(255,77,77,0.2);padding:2px 4px;border-radius:4px;border:1px solid rgba(255,77,77,0.4);" title="Not started">❌</span></div>';
       }
 
-      if (r.received && r.move && d >= r.received && d <= r.move) {
-        const dayNum     = dateDiffDays(d, r.received) + 1;
-        const daysToMove = dateDiffDays(r.move, d);
-        const isMoveDay  = d === r.move;
-        const totalDays  = dateDiffDays(r.move, r.received) + 1;
-        let actionDay;
-        if      (r.bucket === 'Bucket 1') actionDay = dayNum;
-        else if (r.bucket === 'Bucket 2') actionDay = Math.abs(totalDays - 5);
-        else if (r.bucket === 'Bucket 3') actionDay = Math.abs(19 - totalDays);
-        else if (r.bucket === 'Bucket 4') actionDay = Math.abs(35 - totalDays);
-        else                               actionDay = dayNum;
-
-        const action = getStrategyAction(r.bucket, actionDay, daysToMove);
+      const action = getLeadActionForDate(r, d);
+      if (action) {
+        const isMoveDay = d === r.move;
         const colorClass = isMoveDay ? 'bc-move' : `bc-${bc}`;
-
-        let innerHtml = '';
-        if (action && action.steps && action.steps.length > 0) {
-          const moveDot  = isMoveDay ? '<span class="move-day-dot" title="Move Day"></span>' : '';
-          const stepsHtml = action.steps.map((s, i) =>
-            `<div class="action-line type-${action.type}">
-              <span class="action-num type-${action.type}">${i+1}</span>
-              <span>${s}</span>
-            </div>`
-          ).join('');
-          innerHtml = `<div class="inline-actions">${moveDot ? `<div style="margin-bottom:3px">${moveDot}<span style="font-size:9px;color:#3fb950;font-family:'Space Mono',monospace">MOVE DAY</span></div>` : ''}${stepsHtml}</div>`;
-        } else if (isMoveDay) {
-          innerHtml = `<div style="font-size:9px;color:#3fb950;font-family:'Space Mono',monospace;"><span class="move-day-dot"></span>MOVE DAY</div>`;
-        }
+        const moveDot  = isMoveDay ? '<span class="move-day-dot" title="Move Day"></span>' : '';
+        const stepsHtml = action.steps.map((s, i) =>
+          `<div class="action-line type-${action.type}">
+            <span class="action-num type-${action.type}">${i+1}</span>
+            <span>${s}</span>
+          </div>`
+        ).join('');
+        let innerHtml = `<div class="inline-actions">${moveDot ? `<div style="margin-bottom:3px">${moveDot}<span style="font-size:9px;color:#3fb950;font-family:'Space Mono',monospace">MOVE DAY</span></div>` : ''}${stepsHtml}</div>`;
         if (taskSymbol) innerHtml += taskSymbol;
         html += `<td class="day-cell has-content ${colorClass}${isToday?' today-col':''}">${innerHtml}</td>`;
+      } else if (d === r.move) {
+        let innerHtml = `<div style="font-size:9px;color:#3fb950;font-family:'Space Mono',monospace;"><span class="move-day-dot"></span>MOVE DAY</div>`;
+        if (taskSymbol) innerHtml += taskSymbol;
+        html += `<td class="day-cell has-content bc-move${isToday?' today-col':''}">${innerHtml}</td>`;
       } else {
         html += `<td class="day-cell${isToday?' today-col':''}">${taskSymbol}</td>`;
       }
@@ -1585,19 +1594,16 @@ function generateReport() {
 
   RAW.forEach(r => {
     if (agentFilter && r.agent !== agentFilter) return;
-    if (!r.received || !r.move) return;
-    if (chosenDate < r.received || chosenDate > r.move) return;
-
-    const dayNum     = dateDiffDays(chosenDate, r.received) + 1;
-    const daysToMove = dateDiffDays(r.move, chosenDate);
-    const isMoveDay  = chosenDate === r.move;
-    const action     = getStrategyAction(r.bucket, dayNum, daysToMove);
-
+    const action = getLeadActionForDate(r, chosenDate);
     if (!action || !action.steps || action.steps.length === 0) return;
 
     const taskKey = 'task_status_' + TODAY + '_' + r.id;
     const taskStatus = GLOBAL_TASK_STATUSES[taskKey] || '';
     if (taskStatus !== 'Not started' && taskStatus !== 'Partially done') return;
+
+    const dayNum     = dateDiffDays(chosenDate, r.received) + 1;
+    const daysToMove = dateDiffDays(r.move, chosenDate);
+    const isMoveDay  = chosenDate === r.move;
 
     reportData.push({
       agent: r.agent, id: r.id, custName: r.custName,
@@ -1607,13 +1613,13 @@ function generateReport() {
     });
   });
 
-  const nsCount = reportData.filter(r => r.taskStatus === 'Not started').length;
+  const nsCount = reportData.filter(r => r.taskStatus === 'Not started' || r.taskStatus === '').length;
   const pdCount = reportData.filter(r => r.taskStatus === 'Partially done').length;
   document.getElementById('sumTotal').textContent = reportData.length;
   document.getElementById('sumNS').textContent    = nsCount;
   document.getElementById('sumPD').textContent    = pdCount;
 
-  const dateLabel = formatMonthDay(chosenDate) + ', ' + chosenDate.slice(0,4);
+  const dateLabel = getMonthDay(chosenDate) + ', ' + chosenDate.slice(0,4);
   document.getElementById('reportSubtitle').textContent =
     `Date: ${dateLabel} — Showing leads with pending action items`;
 
@@ -1694,20 +1700,40 @@ async function sendEmailReport() {
 
   const chosenDate = TODAY;
   const freshReportData = [];
+  const agentSummaryMap = {};
 
   RAW.forEach(r => {
-    if (!r.received || !r.move) return;
-    if (chosenDate < r.received || chosenDate > r.move) return;
+    const action = getLeadActionForDate(r, chosenDate);
+    if (!action || !action.steps || action.steps.length === 0) return;
+
     const dayNum     = dateDiffDays(chosenDate, r.received) + 1;
     const daysToMove = dateDiffDays(r.move, chosenDate);
     const isMoveDay  = chosenDate === r.move;
-    const action     = getStrategyAction(r.bucket, dayNum, daysToMove);
-    if (!action || !action.steps || action.steps.length === 0) return;
-    const taskStatus = localStorage.getItem('task_status_' + TODAY + '_' + r.id) || '';
-    if (taskStatus !== 'Not started' && taskStatus !== 'Partially done') return;
-    freshReportData.push({ agent:r.agent, id:r.id, custName:r.custName, bucket:r.bucket, move:r.move, dayNum, daysToMove, isMoveDay, taskStatus, actionSteps:action.steps });
+    const taskKey = 'task_status_' + TODAY + '_' + r.id;
+    const taskStatus = GLOBAL_TASK_STATUSES[taskKey] || '';
+    const agent = r.agent || 'Unknown';
+
+    // Summary calculation
+    if (!agentSummaryMap[agent]) {
+      agentSummaryMap[agent] = { assigned: 0, completed: 0, ns: 0, pd: 0 };
+    }
+    agentSummaryMap[agent].assigned++;
+    if (taskStatus === 'Completed') agentSummaryMap[agent].completed++;
+    else if (taskStatus === 'Partially done') agentSummaryMap[agent].pd++;
+    else agentSummaryMap[agent].ns++; // Treat empty as Not Started
+
+    // Only include pending issues (Not started / Partially done) in the detailed issues list
+    if (taskStatus !== 'Completed') {
+      freshReportData.push({
+        agent, id: r.id, custName: r.custName,
+        bucket: r.bucket, move: r.move,
+        dayNum, daysToMove, isMoveDay, taskStatus,
+        actionSteps: action.steps
+      });
+    }
   });
 
+  // Sort detailed issues
   const bucketOrder = {'Bucket 1':1,'Bucket 2':2,'Bucket 3':3,'Bucket 4':4};
   const statusOrder = {'Not started':1,'Partially done':2};
   freshReportData.sort((a, b) => {
@@ -1716,7 +1742,13 @@ async function sendEmailReport() {
     return (bucketOrder[a.bucket]||9) - (bucketOrder[b.bucket]||9);
   });
 
-  const nsCount = freshReportData.filter(r => r.taskStatus === 'Not started').length;
+  // Convert summary map to sorted array
+  const agentSummary = Object.keys(agentSummaryMap).sort().map(name => ({
+    name,
+    ...agentSummaryMap[name]
+  }));
+
+  const nsCount = freshReportData.filter(r => r.taskStatus === 'Not started' || r.taskStatus === '').length;
   const pdCount = freshReportData.filter(r => r.taskStatus === 'Partially done').length;
 
   const payload = {
@@ -1728,6 +1760,7 @@ async function sendEmailReport() {
         totalIssues: freshReportData.length,
         notStarted: nsCount,
         partiallyDone: pdCount,
+        agentSummary: agentSummary,
         issues: freshReportData.map(r => ({
           agent: r.agent||'', leadId: r.id||'', customerName: r.custName||'',
           bucket: r.bucket||'', moveDate: r.move||'',
