@@ -265,7 +265,40 @@ function generateEmailHTML(reportData) {
     </div>` : ''}
 
     <div style="background:#ffffff;border-radius:10px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.08);margin-bottom:24px;">
-      <div style="background:#0d1117;padding:14px 20px;display:flex;align-items:center;gap:10px;">
+      <div style="background:#0d1117;padding:12px 20px;display:flex;align-items:center;gap:10px;">
+        <span style="font-size:14px;">📊</span>
+        <span style="color:#e6edf3;font-size:14px;font-weight:600;">Agent Performance Summary</span>
+      </div>
+      <div style="overflow-x:auto;">
+        <table style="width:100%;border-collapse:collapse;font-size:12px;">
+          <thead>
+            <tr style="background:#f6f8fa;border-bottom:2px solid #e1e4e8;">
+              <th style="padding:10px 12px;text-align:left;color:#555;font-weight:700;font-size:10px;text-transform:uppercase;letter-spacing:0.5px;">Agent Name</th>
+              <th style="padding:10px 12px;text-align:center;color:#555;font-weight:700;font-size:10px;text-transform:uppercase;letter-spacing:0.5px;">Leads Assigned</th>
+              <th style="padding:10px 12px;text-align:center;color:#555;font-weight:700;font-size:10px;text-transform:uppercase;letter-spacing:0.5px;">Completed</th>
+              <th style="padding:10px 12px;text-align:center;color:#555;font-weight:700;font-size:10px;text-transform:uppercase;letter-spacing:0.5px;">Not Started</th>
+              <th style="padding:10px 12px;text-align:center;color:#555;font-weight:700;font-size:10px;text-transform:uppercase;letter-spacing:0.5px;">Partially Done</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${taskReport && taskReport.agentSummary && taskReport.agentSummary.length > 0
+              ? taskReport.agentSummary.map((agent, i) => `
+                <tr style="background:${i % 2 === 0 ? '#ffffff' : '#f9fafb'};">
+                  <td style="padding:10px 12px;border-bottom:1px solid #eee;font-weight:600;color:#333;">${agent.name}</td>
+                  <td style="padding:10px 12px;border-bottom:1px solid #eee;text-align:center;font-weight:700;color:#1565c0;">${agent.assigned}</td>
+                  <td style="padding:10px 12px;border-bottom:1px solid #eee;text-align:center;font-weight:700;color:#2e7d32;">${agent.completed}</td>
+                  <td style="padding:10px 12px;border-bottom:1px solid #eee;text-align:center;font-weight:700;color:#cc0000;">${agent.ns}</td>
+                  <td style="padding:10px 12px;border-bottom:1px solid #eee;text-align:center;font-weight:700;color:#cc6600;">${agent.pd}</td>
+                </tr>`).join('')
+              : '<tr><td colspan="5" style="padding:20px;text-align:center;color:#999;">No summary data available</td></tr>'
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div style="background:#ffffff;border-radius:10px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.08);margin-bottom:24px;">
+      <div style="background:#0d1117;padding:12px 20px;display:flex;align-items:center;gap:10px;">
         <span style="font-size:14px;">📋</span>
         <span style="color:#e6edf3;font-size:14px;font-weight:600;">Pending Action Items</span>
         <span style="margin-left:auto;background:rgba(88,166,255,0.2);color:#58a6ff;padding:2px 10px;border-radius:10px;font-size:11px;font-weight:700;">${taskReport?.issues?.length || 0} records</span>
