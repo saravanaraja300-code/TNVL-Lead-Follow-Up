@@ -3,8 +3,8 @@ const http = require('http');
 const fs = require('fs');
 const path = require('path');
 const https = require('https');
-const nodemailer = require('nodemailer');
 const mongoose = require('mongoose');
+const fetch = require('node-fetch');
 
 const PORT = process.env.PORT || 3030;
 const SHEET_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSXsdx0UFbCKXSCYwGzxEC5iRO-L31puQ_Ta3xBGRIwyxCW7-PGSmsRfX9bJ3yFdY6DB7RzN98WvcRe/pub?output=csv';
@@ -27,7 +27,7 @@ if (process.env.MONGODB_URI && !process.env.MONGODB_URI.includes('YOUR_PASSWORD'
 }
 
 // ═══════════════════════════════════════════════════════════════
-//  EMAIL HANDLER — Uses Zoho SMTP (Nodemailer)
+//  EMAIL HANDLER — Uses Brevo HTTP API (Render Compatible)
 // ═══════════════════════════════════════════════════════════════
 async function handleEmailRequest(req, res) {
   let body = '';
@@ -43,87 +43,73 @@ async function handleEmailRequest(req, res) {
         hasReportData: !!reportData
       });
 
-      if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
-        console.error('❌ Email failed: Missing EMAIL_USER or EMAIL_PASS in .env');
+      const brevoApiKey = process.env.BREVO_API_KEY;
+      if (!brevoApiKey) {
+        console.error('❌ Email failed: Missing BREVO_API_KEY in .env');
         res.writeHead(500, { 'Content-Type': 'application/json' });
         return res.end(JSON.stringify({
           success: false,
-          message: 'Email credentials missing in server .env'
+          message: 'BREVO_API_KEY missing in server .env'
         }));
       }
 
-      // ── MATCHED TO WORKING PROJECT SETTINGS ──
-      const transporter = nodemailer.createTransport({
-        host: 'smtp.zoho.com',
-        port: 465,
-        secure: true,
-        authMethod: 'LOGIN',
-        auth: {
-          type: 'login',
-          user: process.env.EMAIL_USER,
-          pass: process.env.EMAIL_PASS
-        },
-        connectionTimeout: 30000,
-        greetingTimeout: 15000,
-        socketTimeout: 45000,
-        pool: true,
-        maxConnections: 5,
-        maxMessages: 100
-      });
-
       const htmlContent = generateEmailHTML(reportData);
 
-      // Build recipients array — supports comma-separated emails
-      const recipients = toEmail || process.env.EMAIL_RECIPIENTS || process.env.EMAIL_USER;
+      // Build recipients list
+      const recipientsStr = toEmail || process.env.EMAIL_RECIPIENTS || process.env.EMAIL_USER;
+      const recipientList = recipientsStr
+        .split(',')
+        .map(e => e.trim())
+        .filter(Boolean)
+        .map(email => ({ email }));
 
-      const mailOptions = {
-        from: `"${process.env.EMAIL_FROM_NAME || 'TNVL Reports'}" <${process.env.EMAIL_FROM || process.env.EMAIL_USER}>`,
-        to: recipients,
+      const payload = {
+        sender: {
+          name: process.env.EMAIL_FROM_NAME || 'TNVL Reports',
+          email: process.env.EMAIL_FROM || process.env.EMAIL_USER || 'noreply@brevo.com'
+        },
+        to: recipientList,
         subject: subject || `TNVL Performance Reports Bundle - ${new Date().toLocaleDateString('en-CA')}`,
-        html: htmlContent
+        htmlContent: htmlContent
       };
 
-      console.log(`📨 Sending PDF report to: ${recipients}...`);
+      console.log(`📨 Sending report to Brevo API for ${recipientList.length} recipients...`);
       const startTime = Date.now();
-      const info = await transporter.sendMail(mailOptions);
+      
+      const response = await fetch('https://api.brevo.com/v3/smtp/email', {
+        method: 'POST',
+        headers: {
+          'api-key': brevoApiKey,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(payload)
+      });
+
+      const result = await response.json().catch(() => ({}));
       const duration = Date.now() - startTime;
-      console.log(`✅ Email sent successfully in ${duration}ms:`, info.messageId);
+
+      if (!response.ok) {
+        console.error('❌ Brevo API Error:', result);
+        throw new Error(result.message || `Brevo error ${response.status}`);
+      }
+
+      console.log(`✅ Email sent successfully via Brevo in ${duration}ms:`, result.messageId);
 
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({
         success: true,
-        message: 'Email sent successfully!',
-        messageId: info.messageId,
+        message: 'Email sent successfully via Brevo!',
+        messageId: result.messageId,
         duration
       }));
 
     } catch (error) {
-      console.error('❌ SMTP Error Details:', {
-        code: error.code,
-        message: error.message,
-        errno: error.errno,
-        syscall: error.syscall,
-        address: error.address,
-        port: error.port
-      });
-
-      let userMessage = 'Failed to send report';
-      if (error.code === 'EAUTH') {
-        userMessage = 'Authentication failed. Check Zoho credentials or use an App Password (accounts.zoho.com → Security → App Passwords).';
-      } else if (error.code === 'ECONNREFUSED') {
-        userMessage = 'Connection refused. Port 465 may be blocked by your hosting firewall — contact your host to open outbound port 465.';
-      } else if (error.code === 'ETIMEDOUT' || error.message.includes('timeout')) {
-        userMessage = 'Connection timed out. Firewall may be blocking port 465. Try whitelisting smtp.zoho.com:465.';
-      } else if (error.code === 'ENOTFOUND') {
-        userMessage = 'DNS resolution failed. Cannot reach smtp.zoho.com — check server DNS settings.';
-      } else if (error.code === 'EHOSTUNREACH') {
-        userMessage = 'Host unreachable. Check network connectivity on the server.';
-      }
+      console.error('❌ Email Error Details:', error.message);
 
       res.writeHead(500, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({
         success: false,
-        message: userMessage,
+        message: 'Failed to send email via Brevo: ' + error.message,
         details: error.message
       }));
     }
