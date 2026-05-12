@@ -1306,9 +1306,9 @@ function getLeadActionForDate(r, d) {
   const totalDays  = dateDiffDays(r.move, r.received) + 1;
   let actionDay;
   if      (r.bucket === 'Bucket 1') actionDay = dayNum;
-  else if (r.bucket === 'Bucket 2') actionDay = Math.abs(totalDays - 5);
-  else if (r.bucket === 'Bucket 3') actionDay = Math.abs(19 - totalDays);
-  else if (r.bucket === 'Bucket 4') actionDay = Math.abs(35 - totalDays);
+  else if (r.bucket === 'Bucket 2') actionDay = dayNum - 5;
+  else if (r.bucket === 'Bucket 3') actionDay = dayNum - 19;
+  else if (r.bucket === 'Bucket 4') actionDay = dayNum - 35;
   else                               actionDay = dayNum;
   return getStrategyAction(r.bucket, actionDay, daysToMove);
 }
