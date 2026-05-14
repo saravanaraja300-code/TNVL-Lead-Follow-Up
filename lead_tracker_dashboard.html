@@ -1303,14 +1303,8 @@ function getLeadActionForDate(r, d) {
   if (!r.received || !r.move || d < r.received || d > r.move) return null;
   const dayNum     = dateDiffDays(d, r.received) + 1;
   const daysToMove = dateDiffDays(r.move, d);
-  const totalDays  = dateDiffDays(r.move, r.received) + 1;
-  let actionDay;
-  if      (r.bucket === 'Bucket 1') actionDay = dayNum;
-  else if (r.bucket === 'Bucket 2') actionDay = dayNum - 5;
-  else if (r.bucket === 'Bucket 3') actionDay = dayNum - 19;
-  else if (r.bucket === 'Bucket 4') actionDay = dayNum - 35;
-  else                               actionDay = dayNum;
-  return getStrategyAction(r.bucket, actionDay, daysToMove);
+  
+  return getStrategyAction(r.bucket, dayNum, daysToMove);
 }
 
 // ─────────────────────────────────────────────
